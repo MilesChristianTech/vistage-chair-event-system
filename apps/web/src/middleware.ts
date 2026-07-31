@@ -16,9 +16,10 @@ export async function middleware(request: NextRequest) {
   // gate entirely so the whole app can be clicked through against the
   // in-memory sample data (lib/preview/*). Never set in a real deployment.
   if (process.env.PREVIEW_MODE === 'true') {
-    if (request.nextUrl.pathname === '/sign-in') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+    // Let /sign-in itself render (it's the real, designed front door — Part
+    // 2.5) instead of forcing past it. Only skip the *gate* that would
+    // otherwise bounce every other page back to it, since there's no real
+    // session to check.
     return NextResponse.next();
   }
 
