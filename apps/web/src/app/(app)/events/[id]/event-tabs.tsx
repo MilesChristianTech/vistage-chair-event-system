@@ -10,6 +10,7 @@ const TABS = [
   { segment: 'form', label: 'Form' },
   { segment: 'send', label: 'Send' },
   { segment: 'dashboard', label: 'Dashboard' },
+  { segment: 'responses', label: 'Responses' },
 ];
 
 export default function EventTabs({ eventId }: { eventId: string }) {
