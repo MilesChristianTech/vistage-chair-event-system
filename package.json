@@ -12,6 +12,7 @@
     "worker": "npm run dev --workspace apps/worker",
     "build": "npm run build --workspace apps/web",
     "seed:demo": "npm run seed:demo --workspace apps/web",
+    "reset:demo": "npm run reset:demo --workspace apps/web",
     "provision:tenant": "npm run provision:tenant --workspace apps/web"
   },
   "engines": {

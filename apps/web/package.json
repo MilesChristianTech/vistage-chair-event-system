@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "provision:tenant": "tsx scripts/provision-tenant.ts",
-    "reset:demo": "tsx scripts/reset-demo.ts"
+    "reset:demo": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "next": "^14.2.5",
