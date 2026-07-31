@@ -4,6 +4,9 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
+import type { Database } from '@/lib/database.types';
+
+type EventStatus = Database['public']['Tables']['events']['Row']['status'];
 
 export interface ActionResult {
   ok: boolean;
@@ -83,7 +86,7 @@ export async function updateEventAction(eventId: string, _prevState: ActionResul
 
 export async function updateEventStatusAction(eventId: string, status: string): Promise<ActionResult> {
   const supabase = await createClient();
-  const { error } = await supabase.from('events').update({ status }).eq('id', eventId);
+  const { error } = await supabase.from('events').update({ status: status as EventStatus }).eq('id', eventId);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/events/${eventId}`, 'layout');
   return { ok: true };
@@ -215,7 +218,10 @@ export async function updateInvitationAction(
     .single();
   if (fetchError || !invitation) return { ok: false, error: 'Invitation not found.' };
 
-  const { error } = await supabase.from('invitations').update(patch).eq('id', invitationId);
+  const { error } = await supabase
+    .from('invitations')
+    .update(patch as Database['public']['Tables']['invitations']['Update'])
+    .eq('id', invitationId);
   if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/events/${invitation.event_id}`, 'layout');

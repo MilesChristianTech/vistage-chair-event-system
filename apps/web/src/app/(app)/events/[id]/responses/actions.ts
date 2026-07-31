@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
+import type { Database } from '@/lib/database.types';
 
 export interface ActionResult {
   ok: boolean;
@@ -62,7 +63,10 @@ export async function resolveExceptionAction(responseId: string, invitationId: s
     }
     if (Object.keys(patch).length > 0) {
       patch.rsvp_responded_at = new Date().toISOString();
-      await supabase.from('invitations').update(patch).eq('id', invitationId);
+      await supabase
+        .from('invitations')
+        .update(patch as Database['public']['Tables']['invitations']['Update'])
+        .eq('id', invitationId);
     }
   }
 

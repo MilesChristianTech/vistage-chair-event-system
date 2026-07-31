@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import type { Database, Json } from '@/lib/database.types';
 
 /**
  * Public RSVP submission (Part 3.6, 3.10). No auth — reachable by anyone
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       tenant_id: form.tenant_id,
       form_id: form.id,
       invitation_id: resolvedInvitationId,
-      raw_answers: answers,
+      raw_answers: answers as Json,
       submitted_email: submittedEmail ?? null,
       submitted_name: submittedName ?? null,
       match_status: matchStatus,
@@ -120,7 +121,10 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
 
     if (Object.keys(patch).length > 0) {
       patch.rsvp_responded_at = new Date().toISOString();
-      await supabase.from('invitations').update(patch).eq('id', resolvedInvitationId);
+      await supabase
+        .from('invitations')
+        .update(patch as Database['public']['Tables']['invitations']['Update'])
+        .eq('id', resolvedInvitationId);
     }
 
     await supabase.from('engagement_signals').insert({

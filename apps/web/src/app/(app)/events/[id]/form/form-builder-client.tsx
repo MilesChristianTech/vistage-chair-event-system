@@ -76,7 +76,9 @@ export default function FormBuilderClient({
       const oldIndex = current.findIndex((q) => q.id === active.id);
       const newIndex = current.findIndex((q) => q.id === over.id);
       const next = arrayMove(current, oldIndex, newIndex);
-      startTransition(() => reorderQuestionsAction(next.map((q) => q.id)));
+      startTransition(() => {
+        void reorderQuestionsAction(next.map((q) => q.id));
+      });
       return next;
     });
   }

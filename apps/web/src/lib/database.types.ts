@@ -1,4 +1,4 @@
-// Hand-maintained to mirror supabase/migrations/*.sql exactly.
+﻿// Hand-maintained to mirror supabase/migrations/*.sql exactly.
 // If you have the Supabase CLI installed, you can instead generate this with:
 //   supabase gen types typescript --project-id <ref> > src/lib/database.types.ts
 // and it will produce an equivalent (superset) shape.
@@ -18,6 +18,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['tenants']['Row']> & { name: string };
         Update: Partial<Database['public']['Tables']['tenants']['Row']>;
+      Relationships: [];
       };
       app_users: {
         Row: {
@@ -33,6 +34,7 @@ export interface Database {
           display_name: string;
         };
         Update: Partial<Database['public']['Tables']['app_users']['Row']>;
+      Relationships: [];
       };
       relationship_types: {
         Row: {
@@ -48,6 +50,7 @@ export interface Database {
           label: string;
         };
         Update: Partial<Database['public']['Tables']['relationship_types']['Row']>;
+      Relationships: [];
       };
       event_types: {
         Row: {
@@ -63,6 +66,7 @@ export interface Database {
           label: string;
         };
         Update: Partial<Database['public']['Tables']['event_types']['Row']>;
+      Relationships: [];
       };
       people: {
         Row: {
@@ -88,6 +92,7 @@ export interface Database {
           last_name: string;
         };
         Update: Partial<Database['public']['Tables']['people']['Row']>;
+      Relationships: [];
       };
       events: {
         Row: {
@@ -120,6 +125,15 @@ export interface Database {
           public_title: string;
         };
         Update: Partial<Database['public']['Tables']['events']['Row']>;
+      Relationships: [
+        {
+          foreignKeyName: 'events_event_type_id_fkey';
+          columns: ['event_type_id'];
+          isOneToOne: false;
+          referencedRelation: 'event_types';
+          referencedColumns: ['id'];
+        },
+      ];
       };
       invitations: {
         Row: {
@@ -150,6 +164,22 @@ export interface Database {
           person_id: string;
         };
         Update: Partial<Database['public']['Tables']['invitations']['Row']>;
+      Relationships: [
+        {
+          foreignKeyName: 'invitations_person_id_fkey';
+          columns: ['person_id'];
+          isOneToOne: false;
+          referencedRelation: 'people';
+          referencedColumns: ['id'];
+        },
+        {
+          foreignKeyName: 'invitations_event_id_fkey';
+          columns: ['event_id'];
+          isOneToOne: false;
+          referencedRelation: 'events';
+          referencedColumns: ['id'];
+        },
+      ];
       };
       notes: {
         Row: {
@@ -167,6 +197,7 @@ export interface Database {
           body: string;
         };
         Update: Partial<Database['public']['Tables']['notes']['Row']>;
+      Relationships: [];
       };
       messages: {
         Row: {
@@ -199,6 +230,7 @@ export interface Database {
           message_type: Database['public']['Tables']['messages']['Row']['message_type'];
         };
         Update: Partial<Database['public']['Tables']['messages']['Row']>;
+      Relationships: [];
       };
       message_variants: {
         Row: {
@@ -221,6 +253,7 @@ export interface Database {
           body: string;
         };
         Update: Partial<Database['public']['Tables']['message_variants']['Row']>;
+      Relationships: [];
       };
       forms: {
         Row: {
@@ -241,6 +274,7 @@ export interface Database {
           event_id: string;
         };
         Update: Partial<Database['public']['Tables']['forms']['Row']>;
+      Relationships: [];
       };
       form_questions: {
         Row: {
@@ -270,6 +304,7 @@ export interface Database {
           label: string;
         };
         Update: Partial<Database['public']['Tables']['form_questions']['Row']>;
+      Relationships: [];
       };
       form_responses: {
         Row: {
@@ -294,6 +329,7 @@ export interface Database {
           raw_answers: Json;
         };
         Update: Partial<Database['public']['Tables']['form_responses']['Row']>;
+      Relationships: [];
       };
       mailbox_connections: {
         Row: {
@@ -313,6 +349,7 @@ export interface Database {
           tenant_id: string;
         };
         Update: Partial<Database['public']['Tables']['mailbox_connections']['Row']>;
+      Relationships: [];
       };
       tenant_settings: {
         Row: {
@@ -329,6 +366,7 @@ export interface Database {
           tenant_id: string;
         };
         Update: Partial<Database['public']['Tables']['tenant_settings']['Row']>;
+      Relationships: [];
       };
       send_jobs: {
         Row: {
@@ -365,6 +403,7 @@ export interface Database {
           pace_profile: Database['public']['Tables']['send_jobs']['Row']['pace_profile'];
         };
         Update: Partial<Database['public']['Tables']['send_jobs']['Row']>;
+      Relationships: [];
       };
       send_job_recipients: {
         Row: {
@@ -393,6 +432,7 @@ export interface Database {
           scheduled_at: string;
         };
         Update: Partial<Database['public']['Tables']['send_job_recipients']['Row']>;
+      Relationships: [];
       };
       engagement_signals: {
         Row: {
@@ -410,6 +450,7 @@ export interface Database {
           signal_type: Database['public']['Tables']['engagement_signals']['Row']['signal_type'];
         };
         Update: Partial<Database['public']['Tables']['engagement_signals']['Row']>;
+      Relationships: [];
       };
     };
     Views: Record<string, never>;

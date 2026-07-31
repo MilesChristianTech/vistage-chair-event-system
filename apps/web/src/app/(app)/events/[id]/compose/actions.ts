@@ -14,6 +14,9 @@ import {
   type SuiteMessageKey,
 } from '@/lib/coach';
 import { AnthropicNotConfiguredError } from '@/lib/anthropic';
+import type { Database } from '@/lib/database.types';
+
+type MessageType = Database['public']['Tables']['messages']['Row']['message_type'];
 
 export interface ActionResult {
   ok: boolean;
@@ -90,7 +93,7 @@ export async function generateDraftAction(eventId: string, messageType: string):
       .from('messages')
       .update({ subject: draft.subject, body: draft.body, is_approved: false })
       .eq('event_id', eventId)
-      .eq('message_type', messageType);
+      .eq('message_type', messageType as MessageType);
 
     if (error) return { ok: false, error: error.message };
 

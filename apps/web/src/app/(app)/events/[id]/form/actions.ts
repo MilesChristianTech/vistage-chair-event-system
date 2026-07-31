@@ -3,6 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
+import type { Database, Json } from '@/lib/database.types';
+
+type QuestionType = Database['public']['Tables']['form_questions']['Row']['question_type'];
 
 export interface ActionResult {
   ok: boolean;
@@ -35,7 +38,7 @@ export async function addQuestionAction(formId: string, questionType: string): P
   const { error } = await supabase.from('form_questions').insert({
     tenant_id: appUser.tenant_id,
     form_id: formId,
-    question_type: questionType,
+    question_type: questionType as QuestionType,
     label: DEFAULT_LABELS[questionType] ?? 'New question',
     is_required: questionType === 'attendance',
     sort_order: nextOrder,
@@ -74,7 +77,10 @@ export async function updateFormMetaAction(
   fields: { intro_text?: string; confirmation_text?: string; theme?: Record<string, unknown> }
 ): Promise<ActionResult> {
   const supabase = await createClient();
-  const { error } = await supabase.from('forms').update(fields).eq('id', formId);
+  const { error } = await supabase
+    .from('forms')
+    .update(fields as { intro_text?: string; confirmation_text?: string; theme?: Json })
+    .eq('id', formId);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

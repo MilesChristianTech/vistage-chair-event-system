@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import type { Json } from '@/lib/database.types';
 
 /**
  * Everything the public, unauthenticated hosted RSVP form needs, resolved
@@ -22,7 +23,7 @@ export interface PublicFormData {
     label: string;
     help_text: string | null;
     is_required: boolean;
-    options: Record<string, unknown>;
+    options: Json;
   }>;
   event: {
     publicTitle: string;

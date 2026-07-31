@@ -82,10 +82,10 @@ async function callForJSON<T>(params: {
     tool_choice: { type: 'tool', name: params.toolName },
   });
 
-  const toolUse = response.content.find(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (block: any): block is { type: 'tool_use'; input: unknown } => block.type === 'tool_use'
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const toolUse = (response.content as any[]).find((block) => block.type === 'tool_use') as
+    | { type: 'tool_use'; input: unknown }
+    | undefined;
 
   if (!toolUse) {
     throw new Error('The writing assistant did not return a structured draft. Please try again.');
