@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
+import { createMockClient } from '@/lib/preview/mock-client';
 
 /**
  * Service-role Supabase client. Bypasses RLS entirely — Supabase's service
@@ -21,6 +22,11 @@ import type { Database } from '@/lib/database.types';
 export function createServiceClient() {
   if (typeof window !== 'undefined') {
     throw new Error('createServiceClient() must never be called in the browser.');
+  }
+
+  // PREVIEW_MODE: see lib/supabase/server.ts for the rationale.
+  if (process.env.PREVIEW_MODE === 'true') {
+    return createMockClient() as unknown as ReturnType<typeof createSupabaseClient<Database>>;
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

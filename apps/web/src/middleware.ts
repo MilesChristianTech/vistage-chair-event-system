@@ -12,6 +12,16 @@ function isPublicPath(pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
+  // PREVIEW_MODE: no real Supabase project configured yet — skip the auth
+  // gate entirely so the whole app can be clicked through against the
+  // in-memory sample data (lib/preview/*). Never set in a real deployment.
+  if (process.env.PREVIEW_MODE === 'true') {
+    if (request.nextUrl.pathname === '/sign-in') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return NextResponse.next();
+  }
+
   const response = NextResponse.next({ request });
 
   const supabase = createServerClient(

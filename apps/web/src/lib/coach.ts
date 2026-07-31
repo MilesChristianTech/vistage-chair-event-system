@@ -64,6 +64,13 @@ async function callForJSON<T>(params: {
   schema: Record<string, unknown>;
   maxTokens?: number;
 }): Promise<T> {
+  if (process.env.PREVIEW_MODE === 'true') {
+    const { buildPreviewResponse } = await import('@/lib/preview/coach-fixtures');
+    // A believable delay so the UI's loading states are visible too.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    return buildPreviewResponse(params.toolName, params.user) as T;
+  }
+
   const anthropic = getAnthropicClient();
 
   const response = await anthropic.messages.create({
