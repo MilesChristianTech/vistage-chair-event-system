@@ -1,0 +1,74 @@
+import { notFound } from 'next/navigation';
+import { AppPageBody } from '@/components/page-header';
+import { createClient } from '@/lib/supabase/server';
+import ComposeClient from './compose-client';
+
+export const dynamic = 'force-dynamic';
+
+const MESSAGE_TYPE_ORDER = [
+  'invitation',
+  'reminder',
+  'priority_follow_up',
+  'rsvp_confirmation',
+  'final_details',
+  'waitlist',
+  'cancellation',
+  'thank_you',
+  'post_event_follow_up',
+  'form_intro',
+  'form_confirmation',
+] as const;
+
+export default async function ComposePage({ params }: { params: { id: string } }) {
+  const supabase = await createClient();
+
+  const { data: event } = await supabase.from('events').select('id, public_title').eq('id', params.id).single();
+  if (!event) notFound();
+
+  const { data: messages } = await supabase.from('messages').select('*').eq('event_id', params.id);
+  const invitationMessage = messages?.find((m) => m.message_type === 'invitation');
+
+  const { data: variants } = invitationMessage
+    ? await supabase
+        .from('message_variants')
+        .select('*')
+        .eq('message_id', invitationMessage.id)
+        .order('variant_index')
+    : { data: [] };
+
+  const { data: invitations } = await supabase
+    .from('invitations')
+    .select('id, personalization_note, people(id, first_name, last_name, summary_note)')
+    .eq('event_id', params.id)
+    .order('created_at', { ascending: false });
+
+  const { data: settings } = await supabase
+    .from('tenant_settings')
+    .select('variant_threshold, variant_count_min, variant_count_max')
+    .single();
+
+  const invitedCount = invitations?.length ?? 0;
+
+  const sortedMessages = MESSAGE_TYPE_ORDER.map((type) => messages?.find((m) => m.message_type === type)).filter(
+    (m): m is NonNullable<typeof m> => Boolean(m)
+  );
+
+  return (
+    <AppPageBody>
+      <ComposeClient
+        eventId={params.id}
+        messages={sortedMessages}
+        variants={variants ?? []}
+        invitedCount={invitedCount}
+        variantThreshold={settings?.variant_threshold ?? 60}
+        variantCountMin={settings?.variant_count_min ?? 5}
+        variantCountMax={settings?.variant_count_max ?? 8}
+        invitations={(invitations ?? []).map((inv) => ({
+          id: inv.id,
+          personalization_note: inv.personalization_note,
+          person: Array.isArray(inv.people) ? inv.people[0] ?? null : inv.people,
+        }))}
+      />
+    </AppPageBody>
+  );
+}
