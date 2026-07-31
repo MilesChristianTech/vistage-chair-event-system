@@ -42,6 +42,17 @@ This is the part worth understanding deeply before touching it.
 - `form_responses` is **append-only** — nothing in the app ever updates `raw_answers` after the fact. Matching a response to the right person (`match_status`, `resolved_invitation_id`) is a separate concern layered on top, exactly per Part 3.10's "keep raw data untouched, normalize in a separate layer."
 - Matching happens two ways: automatically at submission time (by invitation token in the URL, or by normalized email) in `app/api/public/forms/[token]/submit/route.ts`; or manually by the Host from the **Responses → Needs matching** tab (`events/[id]/responses/exception-row.tsx`), which runs the identical interpretation logic without ever touching the original row.
 
+## Known dependency advisories (reviewed, accepted)
+
+`npm audit` flags a handful of advisories in this dependency tree as of this writing. Each was reviewed for actual reachability in this app rather than reflexively patched, since some "fixes" require breaking major-version jumps (e.g. Next.js 14 → 16) that would need their own testing pass:
+
+- **`xlsx` (SheetJS)** — prototype pollution / ReDoS advisories with no fix published to the npm registry (the maintainer distributes patched builds from their own site instead). Exposure here is low: it only ever parses a file the signed-in Host deliberately uploads for their own contact import, never attacker-supplied input from the public internet. If this becomes a concern, the fix is to fetch SheetJS's patched build directly from their CDN instead of npm, or swap to a different XLSX parser.
+- **PostCSS advisories (XSS/file-read via crafted CSS input)** — only relevant when PostCSS processes untrusted, attacker-controlled CSS at runtime. This app only ever runs PostCSS over its own authored Tailwind stylesheet at build time; there's no runtime CSS-processing endpoint for either app to reach.
+- **Next.js DoS advisories** — already resolved by taking the latest 14.2.x patch (the `^14.2.5` range in `apps/web/package.json` always resolves forward); a fix beyond that requires the Next.js 15/16 major upgrade, deliberately deferred as its own project.
+- **`uuid@8.3.2` (transitive)** — pulled in by an upstream dependency, not called directly by any code in this repo.
+
+Re-run `npm audit` after any dependency bump and re-evaluate this list rather than trusting it to stay accurate.
+
 ## Notable simplifications (known, deliberate, and where to extend them)
 
 - **Bounce detection** is send-time only (a Graph API error at the moment of sending). True NDR/bounce-webhook parsing (catching a bounce that arrives *after* Graph accepted the send) is not implemented — a natural Phase 2 addition would poll the Host's mailbox for bounce messages or use Graph subscriptions.
