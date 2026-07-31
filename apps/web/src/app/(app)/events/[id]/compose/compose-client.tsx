@@ -44,6 +44,7 @@ export default function ComposeClient({
   variantCountMin,
   variantCountMax,
   invitations,
+  alreadySentTypes = [],
 }: {
   eventId: string;
   messages: MessageRow[];
@@ -53,6 +54,7 @@ export default function ComposeClient({
   variantCountMin: number;
   variantCountMax: number;
   invitations: InviteeForTouch[];
+  alreadySentTypes?: string[];
 }) {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState('invitation');
@@ -224,6 +226,14 @@ export default function ComposeClient({
                 )}
               </div>
             </div>
+
+            {alreadySentTypes.includes(selected.message_type) ? (
+              <div className="rounded border border-navy-200 bg-navy-50 text-navy-700 text-sm px-3 py-2 mb-4">
+                This message already went out to some people. Editing it now only changes what{' '}
+                <em>hasn't been sent yet</em> — it can't rewrite what already landed in someone's inbox. If you need
+                to correct something they already received, send a follow-up instead.
+              </div>
+            ) : null}
 
             {!selected.body ? (
               <div className="text-center py-10">

@@ -49,6 +49,17 @@ export default async function ComposePage({ params }: { params: { id: string } }
 
   const invitedCount = invitations?.length ?? 0;
 
+  // Part 6.3/6.5: editing an already-sent message must never look like a
+  // silent no-op or a mysterious lock — the editor stays open (you can
+  // always send a fresh correction/update), but it should say plainly that
+  // past sends are untouched.
+  const { data: sentJobs } = await supabase
+    .from('send_jobs')
+    .select('job_type')
+    .eq('event_id', params.id)
+    .in('status', ['running', 'paused', 'completed']);
+  const alreadySentTypes = new Set((sentJobs ?? []).map((j) => j.job_type));
+
   const sortedMessages = MESSAGE_TYPE_ORDER.map((type) => messages?.find((m) => m.message_type === type)).filter(
     (m): m is NonNullable<typeof m> => Boolean(m)
   );
@@ -63,6 +74,7 @@ export default async function ComposePage({ params }: { params: { id: string } }
         variantThreshold={settings?.variant_threshold ?? 60}
         variantCountMin={settings?.variant_count_min ?? 5}
         variantCountMax={settings?.variant_count_max ?? 8}
+        alreadySentTypes={Array.from(alreadySentTypes)}
         invitations={(invitations ?? []).map((inv) => ({
           id: inv.id,
           personalization_note: inv.personalization_note,
