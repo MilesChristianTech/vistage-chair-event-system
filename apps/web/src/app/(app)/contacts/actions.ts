@@ -1,0 +1,304 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { requireCurrentUser } from '@/lib/tenant';
+import type { MappedPersonRow } from '@/lib/import';
+
+export interface ActionResult {
+  ok: boolean;
+  error?: string;
+}
+
+// Part 4.4 / 6.1: editing a person is always free, immediate, and has no
+// side effects — it never triggers a send, never touches history.
+export async function createPersonAction(formData: FormData): Promise<ActionResult> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const firstName = String(formData.get('first_name') || '').trim();
+  const lastName = String(formData.get('last_name') || '').trim();
+  if (!firstName || !lastName) {
+    return { ok: false, error: 'First and last name are required.' };
+  }
+
+  const { error } = await supabase.from('people').insert({
+    tenant_id: appUser.tenant_id,
+    first_name: firstName,
+    last_name: lastName,
+    preferred_name: String(formData.get('preferred_name') || '').trim() || null,
+    email: String(formData.get('email') || '').trim() || null,
+    company: String(formData.get('company') || '').trim() || null,
+    title: String(formData.get('title') || '').trim() || null,
+    relationship_type_id: String(formData.get('relationship_type_id') || '') || null,
+    contact_preference: (String(formData.get('contact_preference') || 'email_ok') as
+      | 'email_ok'
+      | 'phone_only'
+      | 'do_not_contact'),
+    summary_note: String(formData.get('summary_note') || '').trim() || null,
+  });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/contacts');
+  return { ok: true };
+}
+
+export async function updatePersonAction(personId: string, formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const firstName = String(formData.get('first_name') || '').trim();
+  const lastName = String(formData.get('last_name') || '').trim();
+  if (!firstName || !lastName) {
+    return { ok: false, error: 'First and last name are required.' };
+  }
+
+  const { error } = await supabase
+    .from('people')
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      preferred_name: String(formData.get('preferred_name') || '').trim() || null,
+      email: String(formData.get('email') || '').trim() || null,
+      company: String(formData.get('company') || '').trim() || null,
+      title: String(formData.get('title') || '').trim() || null,
+      relationship_type_id: String(formData.get('relationship_type_id') || '') || null,
+      contact_preference: (String(formData.get('contact_preference') || 'email_ok') as
+        | 'email_ok'
+        | 'phone_only'
+        | 'do_not_contact'),
+      summary_note: String(formData.get('summary_note') || '').trim() || null,
+    })
+    .eq('id', personId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/contacts');
+  revalidatePath(`/contacts/${personId}`);
+  return { ok: true };
+}
+
+// Part 3.2 / 4.3: mark inactive rather than delete, so historical events
+// keep their integrity. Hard delete remains possible but is a separate,
+// explicitly gated action (see deletePersonAction below).
+// Thin wrappers matching useFormState's (prevState, formData) signature —
+// bind the id with .bind(null, id) to get a compatible action reference.
+export async function createPersonFormAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const result = await createPersonAction(formData);
+  if (result.ok) redirect('/contacts');
+  return result;
+}
+
+export async function updatePersonFormAction(
+  personId: string,
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  return updatePersonAction(personId, formData);
+}
+
+export async function setPersonActiveAction(personId: string, isActive: boolean): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from('people').update({ is_active: isActive }).eq('id', personId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/contacts');
+  revalidatePath(`/contacts/${personId}`);
+  return { ok: true };
+}
+
+export async function deletePersonAction(personId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { count } = await supabase
+    .from('invitations')
+    .select('id', { count: 'exact', head: true })
+    .eq('person_id', personId);
+
+  if (count && count > 0) {
+    return {
+      ok: false,
+      error: `This person is part of ${count} event ${count === 1 ? 'invitation' : 'invitations'}. Mark them inactive instead to keep your event history intact, or remove them from those events first if you really want to delete.`,
+    };
+  }
+
+  const { error } = await supabase.from('people').delete().eq('id', personId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/contacts');
+  return { ok: true };
+}
+
+export async function addPersonNoteAction(personId: string, body: string): Promise<ActionResult> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  if (!body.trim()) return { ok: false, error: 'Note cannot be empty.' };
+
+  const { error } = await supabase.from('notes').insert({
+    tenant_id: appUser.tenant_id,
+    person_id: personId,
+    body: body.trim(),
+    created_by: appUser.id,
+  });
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/contacts/${personId}`);
+  return { ok: true };
+}
+
+export async function addPersonNoteFormAction(
+  personId: string,
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const result = await addPersonNoteAction(personId, String(formData.get('body') || ''));
+  return result;
+}
+
+export async function mergePeopleAction(keepId: string, mergeAwayId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  // Re-point invitations and notes from the duplicate onto the kept record,
+  // skipping any invitation that would collide with one the kept record
+  // already has for the same event (3.10: never silently create duplicate
+  // invitations).
+  const { data: dupInvitations } = await supabase
+    .from('invitations')
+    .select('id, event_id')
+    .eq('person_id', mergeAwayId);
+
+  const { data: keepInvitations } = await supabase.from('invitations').select('event_id').eq('person_id', keepId);
+  const keepEventIds = new Set((keepInvitations ?? []).map((i) => i.event_id));
+
+  for (const inv of dupInvitations ?? []) {
+    if (keepEventIds.has(inv.event_id)) continue; // kept record already has this event
+    await supabase.from('invitations').update({ person_id: keepId }).eq('id', inv.id);
+  }
+
+  await supabase.from('notes').update({ person_id: keepId }).eq('person_id', mergeAwayId);
+  const { error } = await supabase.from('people').delete().eq('id', mergeAwayId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/contacts');
+  revalidatePath(`/contacts/${keepId}`);
+  return { ok: true };
+}
+
+export interface DuplicateCheckResult {
+  normalizedEmail: string;
+  existingPersonId: string;
+  existingName: string;
+}
+
+export async function checkDuplicateEmailsAction(emails: string[]): Promise<DuplicateCheckResult[]> {
+  const supabase = await createClient();
+  const normalized = Array.from(new Set(emails.map((e) => e.toLowerCase().trim()).filter(Boolean)));
+  if (normalized.length === 0) return [];
+
+  const { data } = await supabase
+    .from('people')
+    .select('id, first_name, last_name, email_normalized')
+    .in('email_normalized', normalized);
+
+  return (data ?? []).map((p) => ({
+    normalizedEmail: p.email_normalized!,
+    existingPersonId: p.id,
+    existingName: `${p.first_name} ${p.last_name}`,
+  }));
+}
+
+export interface ImportSummary {
+  added: number;
+  updated: number;
+  skipped: number;
+  flagged: number;
+}
+
+export async function commitImportAction(params: {
+  rows: MappedPersonRow[];
+  dedupeChoice: 'update' | 'skip' | 'keep_both';
+}): Promise<{ ok: true; summary: ImportSummary } | { ok: false; error: string }> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+  const { rows, dedupeChoice } = params;
+
+  const emails = rows.map((r) => r.email).filter((e): e is string => Boolean(e));
+  const duplicates = await checkDuplicateEmailsAction(emails);
+  const dupByEmail = new Map(duplicates.map((d) => [d.normalizedEmail, d]));
+
+  let added = 0;
+  let updated = 0;
+  let skipped = 0;
+  let flagged = 0;
+
+  for (const row of rows) {
+    if (!row.first_name && !row.last_name) {
+      skipped++;
+      continue;
+    }
+
+    const normalizedEmail = row.email?.toLowerCase().trim();
+    const dup = normalizedEmail ? dupByEmail.get(normalizedEmail) : undefined;
+
+    let relationshipTypeId: string | null = null;
+    if (row.relationship_type_label) {
+      const { data: existingType } = await supabase
+        .from('relationship_types')
+        .select('id')
+        .eq('tenant_id', appUser.tenant_id)
+        .ilike('label', row.relationship_type_label)
+        .maybeSingle();
+
+      if (existingType) {
+        relationshipTypeId = existingType.id;
+      } else {
+        const { data: newType } = await supabase
+          .from('relationship_types')
+          .insert({ tenant_id: appUser.tenant_id, label: row.relationship_type_label, is_system: false })
+          .select('id')
+          .single();
+        relationshipTypeId = newType?.id ?? null;
+      }
+    }
+
+    const payload = {
+      tenant_id: appUser.tenant_id,
+      first_name: row.first_name || '(no first name)',
+      last_name: row.last_name || '(no last name)',
+      preferred_name: row.preferred_name,
+      email: row.email,
+      company: row.company,
+      title: row.title,
+      relationship_type_id: relationshipTypeId,
+      summary_note: row.summary_note,
+    };
+
+    if (dup && dedupeChoice === 'skip') {
+      skipped++;
+      continue;
+    }
+
+    if (dup && dedupeChoice === 'update') {
+      const { error } = await supabase.from('people').update(payload).eq('id', dup.existingPersonId);
+      if (error) flagged++;
+      else updated++;
+      continue;
+    }
+
+    // 'keep_both', or no duplicate at all
+    const { error } = await supabase.from('people').insert(payload);
+    if (error) {
+      flagged++;
+    } else if (!row.email_valid) {
+      flagged++;
+      added++;
+    } else {
+      added++;
+    }
+  }
+
+  revalidatePath('/contacts');
+  return { ok: true, summary: { added, updated, skipped, flagged } };
+}
