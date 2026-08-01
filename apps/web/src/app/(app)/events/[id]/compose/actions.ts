@@ -57,6 +57,7 @@ async function buildEventContext(eventId: string, tenantId: string): Promise<Eve
     hostDisplayName: tenantSettings?.host_display_name ?? null,
     hostSignature: tenantSettings?.host_signature ?? tenantSettings?.host_display_name ?? null,
     formLinkPlaceholder: form ? `{{form_link}}` : '[RSVP link]',
+    voiceSamples: tenantSettings?.voice_samples ?? [],
   };
 }
 

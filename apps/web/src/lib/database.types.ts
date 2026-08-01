@@ -360,6 +360,7 @@ export interface Database {
           branding: Json;
           host_display_name: string | null;
           host_signature: string | null;
+          voice_samples: string[];
           updated_at: string;
         };
         Insert: Partial<Database['public']['Tables']['tenant_settings']['Row']> & {

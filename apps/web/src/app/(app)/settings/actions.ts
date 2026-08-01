@@ -61,6 +61,22 @@ export async function updateAdvancedSettingsAction(_prevState: ActionResult, for
   return { ok: true };
 }
 
+export async function updateVoiceSamplesAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const samples = [
+    String(formData.get('sample_1') || '').trim(),
+    String(formData.get('sample_2') || '').trim(),
+    String(formData.get('sample_3') || '').trim(),
+  ].filter((s) => s.length > 0);
+
+  const { error } = await supabase.from('tenant_settings').update({ voice_samples: samples }).eq('tenant_id', appUser.tenant_id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/settings');
+  return { ok: true };
+}
+
 export async function disconnectMailboxAction(): Promise<ActionResult> {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();

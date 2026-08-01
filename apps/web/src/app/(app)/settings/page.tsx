@@ -5,6 +5,7 @@ import HostProfileForm from './host-profile-form';
 import BrandingForm from './branding-form';
 import ChangePasswordForm from './change-password-form';
 import AdvancedSettingsForm from './advanced-settings-form';
+import VoiceSamplesForm from './voice-samples-form';
 import MailboxOAuthToast from './mailbox-oauth-toast';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,11 @@ export default async function SettingsPage() {
             <h3>Your name & signature</h3>
             <p className="text-navy-500 text-sm mb-4">Used in greetings and message sign-offs across every event.</p>
             <HostProfileForm initial={settings} />
+          </section>
+
+          <section className="card p-5">
+            <h3>Coach voice samples</h3>
+            <VoiceSamplesForm initial={settings?.voice_samples ?? []} />
           </section>
 
           <section className="card p-5">

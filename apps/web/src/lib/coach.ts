@@ -22,6 +22,7 @@ export interface EventContext {
   hostDisplayName: string | null;
   hostSignature: string | null;
   formLinkPlaceholder: string;
+  voiceSamples?: string[];
 }
 
 const GUARDRAILS = `
@@ -55,6 +56,27 @@ Quality bar for any invitation-family message (Part 9 of the build spec):
 - Initial invitations run ~175-300 words unless the event genuinely needs more.
 - Warm, low-pressure close with an easy way to ask questions.
 `.trim();
+
+/** Appends the Host's real past emails, when they've provided any (Settings
+ * → Coach voice samples), as concrete examples to match — phrasing,
+ * formality, format — rather than writing in a generic "AI voice". */
+function buildSystemPrompt(voiceSamples?: string[]): string {
+  if (!voiceSamples || voiceSamples.length === 0) return GUARDRAILS;
+
+  const examples = voiceSamples
+    .map((sample, i) => `Example ${i + 1}:\n"""\n${sample.trim()}\n"""`)
+    .join('\n\n');
+
+  return `${GUARDRAILS}
+
+Matching this Host's real voice:
+The Host has provided real emails they've actually sent before. Study these for their specific phrasing, level of
+formality, sentence length, greeting/sign-off style, and formatting habits — then write in that same voice rather
+than a generic one. Never copy specific facts, names, or details from these examples into a new draft; they are for
+tone and style only.
+
+${examples}`;
+}
 
 async function callForJSON<T>(params: {
   system: string;
@@ -128,7 +150,7 @@ const DRAFT_SCHEMA = {
 
 export async function generateInvitationDraft(ctx: EventContext) {
   return callForJSON<{ subject: string; body: string }>({
-    system: GUARDRAILS,
+    system: buildSystemPrompt(ctx.voiceSamples),
     user: `Write the initial invitation email for this event.\n\n${contextBlock(ctx)}\n\nGreet the recipient as {{greeting_name}} — leave that merge tag literally in the text, it is resolved per-recipient later. Sign off using the host signature block. Return via the tool.`,
     toolName: 'return_draft',
     toolDescription: 'Return the drafted invitation email.',
@@ -145,7 +167,7 @@ export async function refineDraft(params: {
 }) {
   const { ctx, currentSubject, currentBody, instruction, selectedPassage } = params;
   return callForJSON<{ subject: string; body: string }>({
-    system: GUARDRAILS,
+    system: buildSystemPrompt(ctx.voiceSamples),
     user: `${contextBlock(ctx)}
 
 Current draft:
@@ -170,7 +192,7 @@ export async function strengthenDraft(params: {
 }) {
   const { ctx, currentSubject, currentBody } = params;
   return callForJSON<{ subject: string; body: string; improvements: string[] }>({
-    system: GUARDRAILS,
+    system: buildSystemPrompt(ctx.voiceSamples),
     user: `${contextBlock(ctx)}
 
 Current draft:
@@ -215,7 +237,7 @@ export async function generateMessageSuite(ctx: EventContext, invitationDraft: {
   await Promise.all(
     SUITE_MESSAGE_TYPES.map(async (spec) => {
       const draft = await callForJSON<{ subject: string; body: string }>({
-        system: GUARDRAILS,
+        system: buildSystemPrompt(ctx.voiceSamples),
         user: `${contextBlock(ctx)}
 
 The approved initial invitation (for consistent tone/facts/voice):
@@ -243,7 +265,7 @@ export async function generateVariants(params: {
 }) {
   const { ctx, canonicalSubject, canonicalBody, count } = params;
   return callForJSON<{ variants: Array<{ subject: string; body: string }> }>({
-    system: GUARDRAILS,
+    system: buildSystemPrompt(ctx.voiceSamples),
     user: `${contextBlock(ctx)}
 
 Canonical, Host-approved invitation:
@@ -284,7 +306,7 @@ export async function generateHandwrittenTouch(params: {
 }) {
   const { ctx, personFirstName, personContext } = params;
   return callForJSON<{ sentence: string }>({
-    system: GUARDRAILS,
+    system: buildSystemPrompt(ctx.voiceSamples),
     user: `${contextBlock(ctx)}
 
 Write ONE short, genuine personal sentence to open this invitee's email, for ${personFirstName}. It should read like the Host wrote it by hand for this specific person — not a generic pleasantry.
