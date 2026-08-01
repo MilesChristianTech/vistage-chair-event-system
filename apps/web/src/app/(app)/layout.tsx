@@ -20,13 +20,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .toUpperCase();
 
   return (
-    <div className="min-h-screen flex bg-paper">
+    <div className="h-screen flex bg-paper overflow-hidden">
       <Toaster position="bottom-right" toastOptions={{ className: 'font-sans text-sm' }} />
 
-      <aside className="relative w-60 shrink-0 flex flex-col bg-gradient-to-b from-navy-950 to-navy-975">
+      {/* Fixed to the viewport height and never scrolls itself — logo/nav
+          up top and the user/sign-out footer stay put no matter how long
+          the page to the right gets. Only <main> below scrolls. */}
+      <aside className="relative h-full w-60 shrink-0 flex flex-col bg-gradient-to-b from-navy-950 to-navy-975">
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-white/0 via-white/10 to-white/0" />
 
-        <div className="px-5 py-5 border-b border-white/[0.07]">
+        <div className="shrink-0 px-5 py-5 border-b border-white/[0.07]">
           <div className="flex items-center gap-2.5">
             <BrandMark />
             <span className="text-white font-serif text-base leading-tight">Chair Event System</span>
@@ -38,11 +41,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           ) : null}
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
           <NavLinks />
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/[0.07]">
+        <div className="shrink-0 px-3 py-4 border-t border-white/[0.07]">
           <div className="flex items-center gap-2.5 px-1 mb-2">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-navy-600 to-navy-800 text-[11px] font-semibold text-white ring-1 ring-white/10">
               {initials}
@@ -61,11 +64,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col">
-        <div className="flex items-center justify-end border-b border-navy-100 bg-white/80 backdrop-blur px-6 py-2.5">
+      <div className="flex-1 min-w-0 h-full flex flex-col">
+        <div className="shrink-0 flex items-center justify-end border-b border-navy-100 bg-white/80 backdrop-blur px-6 py-2.5">
           <CommandPalette />
         </div>
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0 min-h-0 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
