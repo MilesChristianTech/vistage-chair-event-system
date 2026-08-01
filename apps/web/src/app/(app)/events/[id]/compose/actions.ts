@@ -62,6 +62,11 @@ async function buildEventContext(eventId: string, tenantId: string): Promise<Eve
 
 function friendlyAiError(err: unknown): string {
   if (err instanceof AnthropicNotConfiguredError) return err.message;
+  // The message shown to the Host is intentionally generic (Anthropic's own
+  // "Connection error." etc. isn't actionable for them) — log the full
+  // error, including any underlying `cause`, so it's visible in Vercel's
+  // Runtime Logs when diagnosing a real failure.
+  console.error('[coach]', err, (err as { cause?: unknown } | undefined)?.cause ?? '');
   return err instanceof Error ? err.message : 'The writing assistant hit a snag. Please try again.';
 }
 
