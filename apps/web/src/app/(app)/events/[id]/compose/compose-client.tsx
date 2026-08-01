@@ -248,6 +248,7 @@ export default function ComposeClient({
                 <button className="btn-primary" onClick={generate} disabled={isPending}>
                   {isPending ? 'Writing…' : 'Have the Coach draft this'}
                 </button>
+                {error ? <p className="text-sm text-danger bg-danger-bg rounded px-3 py-2 mt-4 max-w-md mx-auto">{error}</p> : null}
               </div>
             ) : (
               <>

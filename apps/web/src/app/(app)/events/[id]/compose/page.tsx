@@ -4,6 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 import ComposeClient from './compose-client';
 
 export const dynamic = 'force-dynamic';
+// Coach drafts (Anthropic tool-use calls, sometimes generating a whole
+// message suite in parallel) can comfortably exceed Vercel's default 10s
+// serverless function limit — this raises it to the Hobby-plan max so a
+// slow draft fails with our own friendly error instead of a silent platform
+// timeout that looks like the button did nothing.
+export const maxDuration = 60;
 
 const MESSAGE_TYPE_ORDER = [
   'invitation',
