@@ -2,8 +2,6 @@
 // (draft, refine, strengthen, variants, handwritten touch) can be clicked
 // through with no Anthropic key configured. See lib/coach.ts's callForJSON.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function extract(prompt: string, label: string): string | null {
   const m = prompt.match(new RegExp(`${label}:\\s*(.+)`));
   return m ? m[1]!.trim() : null;

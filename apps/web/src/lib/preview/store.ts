@@ -3,7 +3,6 @@
 // Supabase when no real project is configured yet. Never used when
 // PREVIEW_MODE is unset — see lib/supabase/server.ts.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from 'fs';
 import path from 'path';
 import { buildSeedData } from './seed';

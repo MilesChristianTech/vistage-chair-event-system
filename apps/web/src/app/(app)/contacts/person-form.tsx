@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import type { ActionResult } from './actions';
+import { useSuccessToast } from '@/lib/use-success-toast';
 
 type RelationshipType = { id: string; label: string };
 
@@ -32,13 +34,26 @@ export default function PersonForm({
   relationshipTypes,
   initial,
   submitLabel,
+  onSuccess,
 }: {
   action: (state: ActionResult, formData: FormData) => Promise<ActionResult>;
   relationshipTypes: RelationshipType[];
   initial?: PersonFormValues;
   submitLabel: string;
+  onSuccess?: () => void;
 }) {
   const [state, formAction] = useFormState(action, { ok: true });
+  useSuccessToast(state, 'Saved.');
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (state.ok) onSuccess?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <form action={formAction} className="space-y-5 max-w-2xl">
@@ -68,7 +83,7 @@ export default function PersonForm({
           className="input"
           placeholder="e.g. Bill, if their first name is William"
         />
-        <p className="field-hint">Used in email greetings when it's set; falls back to first name otherwise.</p>
+        <p className="field-hint">Used in email greetings when it’s set; falls back to first name otherwise.</p>
       </div>
 
       <div>
@@ -77,7 +92,7 @@ export default function PersonForm({
         </label>
         <input id="email" name="email" type="email" defaultValue={initial?.email ?? ''} className="input" />
         <p className="field-hint">
-          Optional — a person can exist without one, but you won't be able to email them until it's added.
+          Optional — a person can exist without one, but you won’t be able to email them until it’s added.
         </p>
       </div>
 

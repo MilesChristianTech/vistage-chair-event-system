@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
+import { formatEventDate } from '@/lib/datetime';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ export default async function EventsPage() {
 
   const { data: events } = await supabase
     .from('events')
-    .select('id, public_title, internal_name, status, starts_at')
+    .select('id, public_title, internal_name, status, starts_at, time_zone')
     .eq('tenant_id', appUser.tenant_id)
     .order('starts_at', { ascending: false, nullsFirst: true });
 
@@ -44,7 +45,7 @@ export default async function EventsPage() {
       />
       <AppPageBody>
         {!events || events.length === 0 ? (
-          <div className="card p-10 text-center">
+          <div className="card p-10 text-center animate-fade-up">
             <h2 className="text-navy-900">No events yet</h2>
             <p className="text-navy-500 text-sm mt-2 mb-5">Create your first event to start inviting people.</p>
             <Link href="/events/new" className="btn-primary">
@@ -52,15 +53,18 @@ export default async function EventsPage() {
             </Link>
           </div>
         ) : (
-          <div className="card divide-y divide-navy-100">
-            {events.map((event) => (
-              <Link key={event.id} href={`/events/${event.id}`} className="flex items-center justify-between px-5 py-4 hover:bg-navy-50 block">
+          <div className="card divide-y divide-navy-100 overflow-hidden">
+            {events.map((event, i) => (
+              <Link
+                key={event.id}
+                href={`/events/${event.id}`}
+                style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+                className="animate-fade-up flex items-center justify-between px-5 py-4 hover:bg-navy-50 transition-colors duration-150 block"
+              >
                 <div>
                   <p className="font-medium text-navy-900">{event.public_title}</p>
                   <p className="text-xs text-navy-500 mt-0.5">
-                    {event.starts_at
-                      ? new Date(event.starts_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
-                      : 'Date not yet set'}
+                    {formatEventDate(event.starts_at, event.time_zone) ?? 'Date not yet set'}
                   </p>
                 </div>
                 <span className={STATUS_BADGE[event.status] ?? 'badge-neutral'}>{STATUS_LABELS[event.status] ?? event.status}</span>

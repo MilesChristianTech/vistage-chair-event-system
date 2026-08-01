@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { signOutAction } from '@/app/sign-in/actions';
 import NavLinks from './nav-links';
 import CommandPalette from '@/components/command-palette';
+import BrandMark from '@/components/brand-mark';
 import { Toaster } from 'sonner';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -27,13 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <div className="px-5 py-5 border-b border-white/[0.07]">
           <div className="flex items-center gap-2.5">
-            <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg shrink-0">
-              <span className="absolute inset-0 rounded-lg bg-gradient-to-br from-gold-300 to-gold-500 shadow-glow" />
-              <span className="absolute inset-[1px] rounded-[7px] bg-gradient-to-br from-navy-900 to-navy-950" />
-              <span className="relative font-serif text-sm bg-gradient-to-br from-gold-200 to-gold-400 bg-clip-text text-transparent">
-                C
-              </span>
-            </span>
+            <BrandMark />
             <span className="text-white font-serif text-base leading-tight">Chair Event System</span>
           </div>
           {tenant?.is_demo ? (

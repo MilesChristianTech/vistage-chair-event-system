@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import { formatEventDateTime, formatDeadline } from '@/lib/datetime';
 import type { Json } from '@/lib/database.types';
 
 /**
@@ -89,20 +90,9 @@ export async function getPublicFormData(formToken: string, invitationToken?: str
     questions: questions ?? [],
     event: {
       publicTitle: event.public_title,
-      startsAtFormatted: event.starts_at
-        ? new Date(event.starts_at).toLocaleString(undefined, {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            timeZoneName: 'short',
-          })
-        : null,
+      startsAtFormatted: formatEventDateTime(event.starts_at, event.time_zone),
       venueLine,
-      rsvpDeadlineFormatted: event.rsvp_deadline
-        ? new Date(event.rsvp_deadline).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
-        : null,
+      rsvpDeadlineFormatted: formatDeadline(event.rsvp_deadline, event.time_zone),
       capacity: event.capacity,
       status: event.status,
     },

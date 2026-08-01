@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { updateBrandingAction, type ActionResult } from './actions';
+import { useSuccessToast } from '@/lib/use-success-toast';
 
 interface Branding {
   logoUrl?: string;
@@ -21,6 +22,7 @@ function SaveButton() {
 
 export default function BrandingForm({ initial }: { initial: Branding | null }) {
   const [state, formAction] = useFormState<ActionResult, FormData>(updateBrandingAction, { ok: true });
+  useSuccessToast(state, 'Branding saved.');
 
   return (
     <form action={formAction} className="space-y-3 max-w-md">

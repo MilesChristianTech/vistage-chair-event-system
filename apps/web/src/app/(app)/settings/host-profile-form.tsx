@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { updateHostProfileAction, type ActionResult } from './actions';
+import { useSuccessToast } from '@/lib/use-success-toast';
 import type { Database } from '@/lib/database.types';
 
 type Settings = Database['public']['Tables']['tenant_settings']['Row'] | null | undefined;
@@ -17,6 +18,7 @@ function SaveButton() {
 
 export default function HostProfileForm({ initial }: { initial: Settings }) {
   const [state, formAction] = useFormState<ActionResult, FormData>(updateHostProfileAction, { ok: true });
+  useSuccessToast(state, 'Saved.');
 
   return (
     <form action={formAction} className="space-y-3 max-w-md">

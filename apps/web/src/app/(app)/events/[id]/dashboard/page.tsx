@@ -86,7 +86,7 @@ export default async function EventDashboardPage({
         <div>
           <h3 className="mb-2">Next actions</h3>
           {nextActions.length === 0 ? (
-            <div className="card p-4 text-sm text-navy-500">Nothing urgent — you're caught up.</div>
+            <div className="card p-4 text-sm text-navy-500">Nothing urgent — you’re caught up.</div>
           ) : (
             <div className="card divide-y divide-navy-100 overflow-hidden">
               {nextActions.map((action, i) => (

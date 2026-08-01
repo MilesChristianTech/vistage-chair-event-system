@@ -18,7 +18,7 @@ export default function PersonalTouches({ eventId, invitations }: { eventId: str
       <h3>Personal touches</h3>
       <p className="text-navy-500 text-sm mb-1 max-w-xl">
         Fast and entirely optional. Add one genuine sentence to anyone who warrants it and skip the rest — most
-        invitations won't have one, and that's fine. Where you add a line, it appears naturally in their email.
+        invitations won’t have one, and that’s fine. Where you add a line, it appears naturally in their email.
       </p>
       <p className="text-navy-400 text-xs mb-4">{withNote.length} of {invitations.length} have a personal touch so far.</p>
 

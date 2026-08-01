@@ -77,7 +77,7 @@ export default function VariantsPanel({
       {invitedCount < threshold ? (
         <p className="text-navy-400 text-xs mb-4">
           This event currently has {invitedCount} invitees, under the {threshold}-recipient threshold — a single
-          version is fine, but you're welcome to generate variants anyway.
+          version is fine, but you’re welcome to generate variants anyway.
         </p>
       ) : null}
 

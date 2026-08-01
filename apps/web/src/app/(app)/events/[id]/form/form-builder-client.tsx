@@ -111,7 +111,7 @@ export default function FormBuilderClient({
         {responseCount > 0 ? (
           <div className="rounded border border-warn/30 bg-warn-bg text-warn text-sm px-4 py-3">
             {responseCount} {responseCount === 1 ? 'person has' : 'people have'} already responded to this form.
-            Changing or removing a question they already answered means those answers won't line up going forward —
+            Changing or removing a question they already answered means those answers won’t line up going forward —
             consider adding a new question instead of editing an existing one.
           </div>
         ) : null}

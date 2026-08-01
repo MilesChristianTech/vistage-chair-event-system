@@ -198,6 +198,15 @@ async function processRecipient(row: ClaimedRecipient) {
   console.error(`[worker] permanent failure for recipient ${row.id}: ${result.error}`);
 }
 
+// Note for future multi-worker scaling (Part 7.6 anticipates this):
+// claim_due_send_recipients() is safe across multiple worker processes
+// (SELECT ... FOR UPDATE SKIP LOCKED), but the read-then-write increment of
+// send_jobs.sent_count below is not — two workers finishing a send for the
+// same job in the same instant could race and lose an increment. Harmless
+// today (the pilot runs a single worker instance), but if a second worker
+// is ever added, replace this with an atomic SQL increment (a small RPC
+// alongside claim_due_send_recipients, e.g. `sent_count = sent_count + 1`)
+// rather than this read-modify-write.
 async function markSent(row: ClaimedRecipient, job: { id: string; sent_count: number; total_recipients: number; failed_count: number }) {
   const sentAt = new Date().toISOString();
   await supabase

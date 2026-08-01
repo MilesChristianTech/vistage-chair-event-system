@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { updateAdvancedSettingsAction, type ActionResult } from './actions';
+import { useSuccessToast } from '@/lib/use-success-toast';
 import type { Database } from '@/lib/database.types';
 
 type Settings = Database['public']['Tables']['tenant_settings']['Row'] | null | undefined;
@@ -17,12 +18,13 @@ function SaveButton() {
 
 export default function AdvancedSettingsForm({ initial }: { initial: Settings }) {
   const [state, formAction] = useFormState<ActionResult, FormData>(updateAdvancedSettingsAction, { ok: true });
+  useSuccessToast(state, 'Saved.');
 
   return (
     <form action={formAction} className="space-y-3 max-w-md">
       <p className="text-navy-500 text-xs -mt-1 mb-2">
         Controls the message-variation feature (Part 7.5). The defaults are sensible for almost everyone — change
-        these only if you know what you're doing.
+        these only if you know what you’re doing.
       </p>
       <div>
         <label className="field-label">Variant threshold (recipients)</label>

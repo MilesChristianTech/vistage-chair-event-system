@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import BrandMark from '@/components/brand-mark';
 
 // The one place this product gets to make a first impression — still the
 // minimal, no-marketing front door the spec requires (2.5/10.4), just
@@ -23,13 +24,9 @@ export default function SignInShell({ children }: { children: React.ReactNode })
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative inline-flex h-14 w-14 items-center justify-center rounded-2xl mb-5"
+            className="inline-flex mb-5"
           >
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-gold-200 via-gold-400 to-gold-600 shadow-glow" />
-            <div className="absolute inset-[1.5px] rounded-[15px] bg-gradient-to-br from-navy-900 to-navy-950" />
-            <span className="relative font-serif text-2xl bg-gradient-to-br from-gold-200 to-gold-400 bg-clip-text text-transparent">
-              C
-            </span>
+            <BrandMark size="lg" />
           </motion.div>
           <h1 className="text-white font-serif text-2xl">Chair Event System</h1>
           <p className="text-navy-300 text-sm mt-1.5">Sign in to continue</p>

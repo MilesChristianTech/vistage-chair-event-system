@@ -29,6 +29,7 @@ export default function ProfileEditor({
           relationshipTypes={relationshipTypes}
           initial={person}
           submitLabel="Save changes"
+          onSuccess={() => setEditing(false)}
         />
       </div>
     );

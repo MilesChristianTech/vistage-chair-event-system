@@ -23,7 +23,7 @@ export default function ManualEntryPanel({
     <div className="card p-5 max-w-lg">
       <h3>Record a response you received another way</h3>
       <p className="text-navy-500 text-sm mb-4">
-        For a reply that came by phone, email, or in person — this never touches the hosted form's own records.
+        For a reply that came by phone, email, or in person — this never touches the hosted form’s own records.
       </p>
 
       <div className="mb-3">

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AlertTriangle, Info, Zap } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
 
 type MailboxConnection = Database['public']['Tables']['mailbox_connections']['Row'] | null | undefined;
@@ -6,7 +7,7 @@ type MailboxConnection = Database['public']['Tables']['mailbox_connections']['Ro
 /**
  * Part 11.5: "The app must never fail cryptically because a connection is
  * absent." Surfaced once, plainly, on the home dashboard, with a fix (or,
- * for an owner-level gap like a missing AI key, a note that it's on the
+ * for an owner-level gap like a missing AI key, a note that it’s on the
  * operator rather than the Host).
  */
 export default function ConnectionBanner({
@@ -21,7 +22,7 @@ export default function ConnectionBanner({
   if (!mailbox || mailbox.status === 'disconnected') {
     notices.push(
       <Banner key="mailbox" tone="warn">
-        Your email isn't connected yet, so invitations can't be sent. {' '}
+        Your email isn’t connected yet, so invitations can’t be sent. {' '}
         <Link href="/settings" className="underline font-medium">
           Connect your Microsoft account in Settings
         </Link>{' '}
@@ -50,7 +51,7 @@ export default function ConnectionBanner({
   if (!anthropicConfigured) {
     notices.push(
       <Banner key="anthropic" tone="neutral">
-        The writing assistant isn't connected yet — this is a one-time setup step for the operator, not something
+        The writing assistant isn’t connected yet — this is a one-time setup step for the operator, not something
         you need to fix. You can still write and send invitations by hand in the meantime.
       </Banner>
     );
@@ -61,12 +62,19 @@ export default function ConnectionBanner({
   return <div className="space-y-3 mb-6">{notices}</div>;
 }
 
-function Banner({ tone, children }: { tone: 'warn' | 'danger' | 'neutral'; children: React.ReactNode }) {
-  const toneClasses = {
-    warn: 'bg-warn-bg text-warn border-warn/20',
-    danger: 'bg-danger-bg text-danger border-danger/20',
-    neutral: 'bg-navy-50 text-navy-700 border-navy-200',
-  }[tone];
+const TONE_META = {
+  warn: { className: 'bg-warn-bg text-warn border-warn/20', icon: AlertTriangle },
+  danger: { className: 'bg-danger-bg text-danger border-danger/20', icon: Zap },
+  neutral: { className: 'bg-navy-50 text-navy-700 border-navy-200', icon: Info },
+} as const;
 
-  return <div className={`rounded border px-4 py-3 text-sm ${toneClasses}`}>{children}</div>;
+function Banner({ tone, children }: { tone: 'warn' | 'danger' | 'neutral'; children: React.ReactNode }) {
+  const { className, icon: Icon } = TONE_META[tone];
+
+  return (
+    <div className={`flex items-start gap-2.5 rounded-md border px-4 py-3 text-sm animate-fade-up ${className}`}>
+      <Icon className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={1.75} />
+      <div>{children}</div>
+    </div>
+  );
 }

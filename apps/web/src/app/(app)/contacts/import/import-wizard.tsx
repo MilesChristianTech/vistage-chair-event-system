@@ -187,7 +187,7 @@ function DropStep({ onFile, error }: { onFile: (file: File) => void; error: stri
           }}
         />
       </label>
-      <p className="text-navy-400 text-xs mt-4">No template needed — we'll adapt to your file's columns.</p>
+      <p className="text-navy-400 text-xs mt-4">No template needed — we’ll adapt to your file’s columns.</p>
       {error ? <p className="text-danger text-sm mt-4">{error}</p> : null}
     </div>
   );
@@ -210,7 +210,7 @@ function MappingStep({
     <div className="card p-5">
       <h3>Review the column mapping</h3>
       <p className="text-navy-500 text-sm mb-4">
-        We've made our best guess at what each column is. Change anything that's not right.
+        We’ve made our best guess at what each column is. Change anything that’s not right.
       </p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -273,9 +273,9 @@ function PreviewStep({
     <div className="card p-5">
       <h3>Preview</h3>
       <p className="text-navy-500 text-sm mb-4">
-        Here's exactly how the first rows will land. {rows.length} {rows.length === 1 ? 'person' : 'people'} total.
+        Here’s exactly how the first rows will land. {rows.length} {rows.length === 1 ? 'person' : 'people'} total.
         {invalidEmailCount > 0 ? (
-          <span className="text-warn"> {invalidEmailCount} have an email that looks malformed — they'll still be added, flagged for your attention.</span>
+          <span className="text-warn"> {invalidEmailCount} have an email that looks malformed — they’ll still be added, flagged for your attention.</span>
         ) : null}
       </p>
       <div className="overflow-x-auto">

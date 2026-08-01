@@ -4,7 +4,6 @@
 // through against realistic sample data with no real backend. Never
 // imported unless PREVIEW_MODE=true (see lib/supabase/server.ts).
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getTable, setTable, generateId } from './store';
 import { TENANT_ID, USER_ID } from './seed';
 

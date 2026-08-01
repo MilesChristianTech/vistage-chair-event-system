@@ -162,7 +162,14 @@ export async function createSendJobAction(params: {
     : [];
 
   const isSimulated = tenant?.is_demo ?? false;
-  const spanMs = getPaceSpanMs(paceProfile, candidates.length);
+  // PREVIEW_MODE: compress real pacing (minutes-to-days) down to a handful
+  // of seconds so clicking "Send" is actually watchable in a demo, instead
+  // of looking stalled for the length of a real send. Never applies outside
+  // a preview session — see lib/preview/simulate-worker.ts.
+  const spanMs =
+    process.env.PREVIEW_MODE === 'true'
+      ? Math.min(20_000, Math.max(4_000, candidates.length * 1_500))
+      : getPaceSpanMs(paceProfile, candidates.length);
   const schedule = buildSendSchedule({ recipientCount: candidates.length, spanMs });
 
   const variantAssignment =
@@ -235,6 +242,15 @@ export interface SendJobProgress {
 
 export async function getSendJobProgressAction(jobId: string): Promise<SendJobProgress | null> {
   const supabase = await createClient();
+
+  // PREVIEW_MODE: no separate worker process is running alongside this dev
+  // server, so simulate its core behavior right here — see
+  // lib/preview/simulate-worker.ts for why this is safe and why it's never
+  // reached in a real deployment.
+  if (process.env.PREVIEW_MODE === 'true') {
+    const { advanceSimulatedSendJob } = await import('@/lib/preview/simulate-worker');
+    advanceSimulatedSendJob(jobId);
+  }
 
   const { data: job } = await supabase.from('send_jobs').select('*').eq('id', jobId).single();
   if (!job) return null;

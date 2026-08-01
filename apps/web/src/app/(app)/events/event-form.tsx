@@ -1,7 +1,9 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
+import { DateTime } from 'luxon';
 import type { ActionResult } from './actions';
+import { useSuccessToast } from '@/lib/use-success-toast';
 
 type EventType = { id: string; label: string };
 
@@ -24,11 +26,15 @@ export interface EventFormValues {
   rsvp_deadline?: string | null;
 }
 
-function toLocalInputValue(iso?: string | null): string {
+// A `datetime-local` input needs a plain wall-clock string with no
+// timezone. The value is stored as a UTC instant, so it must be rendered
+// back in the *event's own* time_zone — not the browser's — or editing an
+// event from a different timezone than the one it was created in would
+// silently show (and then resave) the wrong wall-clock time.
+function toLocalInputValue(iso?: string | null, zone?: string | null): string {
   if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const dt = DateTime.fromISO(iso, { zone: 'utc' }).setZone(zone || 'America/New_York');
+  return dt.isValid ? dt.toFormat("yyyy-LL-dd'T'HH:mm") : '';
 }
 
 function SubmitButton({ label }: { label: string }) {
@@ -52,6 +58,7 @@ export default function EventForm({
   submitLabel: string;
 }) {
   const [state, formAction] = useFormState(action, { ok: true });
+  useSuccessToast(state, 'Saved.');
 
   return (
     <form action={formAction} className="space-y-6 max-w-2xl">
@@ -90,7 +97,7 @@ export default function EventForm({
       </section>
 
       <section className="space-y-4">
-        <h3>What it's about</h3>
+        <h3>What it’s about</h3>
         <div>
           <label className="field-label" htmlFor="purpose">
             Purpose
@@ -129,7 +136,7 @@ export default function EventForm({
               id="starts_at"
               name="starts_at"
               type="datetime-local"
-              defaultValue={toLocalInputValue(initial?.starts_at)}
+              defaultValue={toLocalInputValue(initial?.starts_at, initial?.time_zone)}
               className="input"
             />
           </div>
@@ -200,7 +207,7 @@ export default function EventForm({
               id="rsvp_deadline"
               name="rsvp_deadline"
               type="datetime-local"
-              defaultValue={toLocalInputValue(initial?.rsvp_deadline)}
+              defaultValue={toLocalInputValue(initial?.rsvp_deadline, initial?.time_zone)}
               className="input"
             />
           </div>

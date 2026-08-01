@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { formatEventDateTime, formatDeadline } from '@/lib/datetime';
 import { requireCurrentUser, getTenantSettings } from '@/lib/tenant';
 import {
   generateInvitationDraft,
@@ -50,21 +51,9 @@ async function buildEventContext(eventId: string, tenantId: string): Promise<Eve
     audienceDescription: event.audience_description,
     valueProposition: event.value_proposition,
     speakerDetails: event.speaker_details,
-    startsAtFormatted: event.starts_at
-      ? new Date(event.starts_at).toLocaleString(undefined, {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          timeZoneName: 'short',
-        })
-      : null,
+    startsAtFormatted: formatEventDateTime(event.starts_at, event.time_zone),
     venueLine,
-    rsvpDeadlineFormatted: event.rsvp_deadline
-      ? new Date(event.rsvp_deadline).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
-      : null,
+    rsvpDeadlineFormatted: formatDeadline(event.rsvp_deadline, event.time_zone),
     hostDisplayName: tenantSettings?.host_display_name ?? null,
     hostSignature: tenantSettings?.host_signature ?? tenantSettings?.host_display_name ?? null,
     formLinkPlaceholder: form ? `{{form_link}}` : '[RSVP link]',

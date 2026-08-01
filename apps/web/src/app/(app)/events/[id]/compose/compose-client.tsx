@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   generateDraftAction,
   saveMessageAction,
@@ -85,6 +86,7 @@ export default function ComposeClient({
       if (!result.ok) setError(result.error || 'Could not save.');
       else {
         setDirty(false);
+        toast.success('Draft saved.');
         router.refresh();
       }
     });
@@ -138,8 +140,10 @@ export default function ComposeClient({
 
   function toggleApprove() {
     if (!selected) return;
+    const willApprove = !selected.is_approved;
     startTransition(async () => {
-      await approveMessageAction(selected.id, !selected.is_approved);
+      await approveMessageAction(selected.id, willApprove);
+      toast.success(willApprove ? 'Approved.' : 'Approval removed — back to draft.');
       router.refresh();
     });
   }
@@ -149,7 +153,10 @@ export default function ComposeClient({
     startTransition(async () => {
       const result = await generateSuiteAction(eventId);
       if (!result.ok) setError(result.error || 'Could not generate the message suite.');
-      else router.refresh();
+      else {
+        toast.success('Full message suite generated — every message is a draft, ready for your review.');
+        router.refresh();
+      }
     });
   }
 
@@ -230,7 +237,7 @@ export default function ComposeClient({
             {alreadySentTypes.includes(selected.message_type) ? (
               <div className="rounded border border-navy-200 bg-navy-50 text-navy-700 text-sm px-3 py-2 mb-4">
                 This message already went out to some people. Editing it now only changes what{' '}
-                <em>hasn't been sent yet</em> — it can't rewrite what already landed in someone's inbox. If you need
+                <em>hasn’t been sent yet</em> — it can’t rewrite what already landed in someone’s inbox. If you need
                 to correct something they already received, send a follow-up instead.
               </div>
             ) : null}

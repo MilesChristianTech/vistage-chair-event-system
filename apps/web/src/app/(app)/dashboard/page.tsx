@@ -4,6 +4,7 @@ import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser, getMailboxConnection } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
 import { getEventMetrics, buildNextActions } from '@/lib/metrics';
+import { formatEventDate } from '@/lib/datetime';
 import ConnectionBanner from '@/components/connection-banner';
 import StatCard from '@/components/stat-card';
 
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
   const [{ data: events }, mailbox] = await Promise.all([
     supabase
       .from('events')
-      .select('id, public_title, internal_name, status, starts_at, capacity, rsvp_deadline')
+      .select('id, public_title, internal_name, status, starts_at, time_zone, capacity, rsvp_deadline')
       .in('status', ['draft', 'inviting', 'closed'])
       .order('starts_at', { ascending: true }),
     getMailboxConnection(appUser.tenant_id),
@@ -63,7 +64,7 @@ export default async function DashboardPage() {
           <div className="card p-10 text-center max-w-xl mx-auto mt-8 animate-fade-up">
             <h2 className="text-navy-900">No events yet</h2>
             <p className="text-navy-500 text-sm mt-2 mb-5">
-              Create your first event to start inviting people. If you haven't imported your contacts yet, start
+              Create your first event to start inviting people. If you haven’t imported your contacts yet, start
               there instead.
             </p>
             <div className="flex items-center justify-center gap-3">
@@ -124,13 +125,7 @@ export default async function DashboardPage() {
                         <ArrowUpRight className="h-3.5 w-3.5 text-navy-400 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-premium" />
                       </p>
                       <p className="text-xs text-navy-500 mt-0.5">
-                        {event.starts_at
-                          ? new Date(event.starts_at).toLocaleDateString(undefined, {
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'Date not yet set'}
+                        {formatEventDate(event.starts_at, event.time_zone) ?? 'Date not yet set'}
                         {' · '}
                         <StatusLabel status={event.status} />
                       </p>
@@ -154,7 +149,7 @@ export default async function DashboardPage() {
               <div>
                 <h2 className="text-base font-semibold text-navy-800 mb-3">Next actions</h2>
                 {allNextActions.length === 0 ? (
-                  <div className="card p-5 text-sm text-navy-500">Nothing urgent right now — you're caught up.</div>
+                  <div className="card p-5 text-sm text-navy-500">Nothing urgent right now — you’re caught up.</div>
                 ) : (
                   <div className="card divide-y divide-navy-100 overflow-hidden">
                     {allNextActions.slice(0, 8).map((action, i) => (

@@ -3,8 +3,6 @@
 //
 // Deliberately fictional, matching the same spirit as scripts/seed-demo.ts.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export const TENANT_ID = 'preview-tenant';
 export const USER_ID = 'preview-user';
 export const EVENT_ID = 'preview-event-roundtable';

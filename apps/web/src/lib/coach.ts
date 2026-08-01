@@ -82,14 +82,12 @@ async function callForJSON<T>(params: {
       {
         name: params.toolName,
         description: params.toolDescription,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         input_schema: params.schema as any,
       },
     ],
     tool_choice: { type: 'tool', name: params.toolName },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toolUse = (response.content as any[]).find((block) => block.type === 'tool_use') as
     | { type: 'tool_use'; input: unknown }
     | undefined;

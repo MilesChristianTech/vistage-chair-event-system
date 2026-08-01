@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { DateTime } from 'luxon';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
 import type { Database } from '@/lib/database.types';
@@ -13,10 +14,22 @@ export interface ActionResult {
   error?: string;
 }
 
+/** A `datetime-local` input gives a plain wall-clock string with no
+ * timezone ("2026-08-15T09:00") — `new Date(...)` on that would parse it in
+ * whatever zone the *server* happens to run in, which is wrong for an event
+ * the Host picked a specific time_zone for. Parse it explicitly as wall-clock
+ * time in the event's own zone instead, then store the correct UTC instant. */
+function parseInZone(raw: string, zone: string): string | null {
+  if (!raw) return null;
+  const parsed = DateTime.fromISO(raw, { zone });
+  return parsed.isValid ? parsed.toUTC().toISO() : null;
+}
+
 function readEventFields(formData: FormData) {
   const startsAtRaw = String(formData.get('starts_at') || '');
   const rsvpDeadlineRaw = String(formData.get('rsvp_deadline') || '');
   const capacityRaw = String(formData.get('capacity') || '');
+  const timeZone = String(formData.get('time_zone') || 'America/New_York');
 
   return {
     internal_name: String(formData.get('internal_name') || '').trim(),
@@ -26,15 +39,15 @@ function readEventFields(formData: FormData) {
     audience_description: String(formData.get('audience_description') || '').trim() || null,
     value_proposition: String(formData.get('value_proposition') || '').trim() || null,
     speaker_details: String(formData.get('speaker_details') || '').trim() || null,
-    starts_at: startsAtRaw ? new Date(startsAtRaw).toISOString() : null,
-    time_zone: String(formData.get('time_zone') || 'America/New_York'),
+    starts_at: parseInZone(startsAtRaw, timeZone),
+    time_zone: timeZone,
     is_virtual: formData.get('is_virtual') === 'on',
     venue_name: String(formData.get('venue_name') || '').trim() || null,
     venue_address: String(formData.get('venue_address') || '').trim() || null,
     parking_notes: String(formData.get('parking_notes') || '').trim() || null,
     virtual_link: String(formData.get('virtual_link') || '').trim() || null,
     capacity: capacityRaw ? Number(capacityRaw) : null,
-    rsvp_deadline: rsvpDeadlineRaw ? new Date(rsvpDeadlineRaw).toISOString() : null,
+    rsvp_deadline: parseInZone(rsvpDeadlineRaw, timeZone),
   };
 }
 
