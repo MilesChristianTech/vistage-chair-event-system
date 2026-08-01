@@ -4,7 +4,13 @@
  * sends are recommended to spread across hours or days for deliverability.
  */
 
-export type PaceProfile = 'fastest' | 'one_day' | 'two_day' | 'custom';
+export type PaceProfile = 'immediate' | 'fastest' | 'one_day' | 'two_day' | 'custom';
+
+const IMMEDIATE_GAP_MS = 5_000;
+// Only offered for genuinely small lists — a handful of test recipients, not
+// a real invite list — since sending in a tight burst is exactly the pattern
+// that trips a new tenant's anti-spam reputation checks at any real volume.
+const IMMEDIATE_MAX_RECIPIENTS = 15;
 
 export interface PaceRecommendation {
   profile: PaceProfile;
@@ -19,8 +25,22 @@ export function getPaceRecommendations(recipientCount: number): PaceRecommendati
   const hour = 60 * 60 * 1000;
   const day = 24 * hour;
 
+  const immediateOption: PaceRecommendation[] =
+    recipientCount > 0 && recipientCount <= IMMEDIATE_MAX_RECIPIENTS
+      ? [
+          {
+            profile: 'immediate',
+            label: 'Send right away',
+            description: `Back to back, about every ${IMMEDIATE_GAP_MS / 1000} seconds. Fine for a small test — not recommended for a real invite list.`,
+            isRecommended: false,
+            totalSpanMs: recipientCount * IMMEDIATE_GAP_MS,
+          },
+        ]
+      : [];
+
   if (recipientCount <= 60) {
     return [
+      ...immediateOption,
       { profile: 'fastest', label: 'Send over about an hour', description: 'Recommended for this size list.', isRecommended: true, totalSpanMs: hour },
       { profile: 'one_day', label: 'Spread over 1 day', description: 'Extra-gentle pacing, if you prefer.', isRecommended: false, totalSpanMs: day },
     ];
@@ -42,6 +62,7 @@ export function getPaceRecommendations(recipientCount: number): PaceRecommendati
 }
 
 export function getPaceSpanMs(profile: PaceProfile, recipientCount: number, customSpanMs?: number): number {
+  if (profile === 'immediate') return recipientCount * IMMEDIATE_GAP_MS;
   if (profile === 'custom') return customSpanMs ?? recipientCount * 60_000;
   const rec = getPaceRecommendations(recipientCount).find((r) => r.profile === profile);
   return rec?.totalSpanMs ?? recipientCount * 60_000;

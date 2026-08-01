@@ -35,18 +35,35 @@ export interface PreflightStatus {
   blockers: string[];
 }
 
+/** Whether a job of this type for this event is still running or paused —
+ * nothing previously stopped a Host from starting a second one on top of it,
+ * which would independently re-target the same not-yet-sent recipients and
+ * risk sending the same message to the same person twice. */
+async function getActiveJobForType(eventId: string, jobType: SendJobType) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('send_jobs')
+    .select('id, status')
+    .eq('event_id', eventId)
+    .eq('job_type', jobType)
+    .in('status', ['running', 'paused'])
+    .maybeSingle();
+  return data;
+}
+
 /** Part 7.7: "Before a send can start, the app verifies..." */
 export async function getPreflightStatusAction(eventId: string, jobType: SendJobType): Promise<PreflightStatus> {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
 
-  const [{ data: tenant }, mailbox, { data: event }, { data: message }, { data: form }, recipients] = await Promise.all([
+  const [{ data: tenant }, mailbox, { data: event }, { data: message }, { data: form }, recipients, activeJob] = await Promise.all([
     supabase.from('tenants').select('is_demo').eq('id', appUser.tenant_id).single(),
     getMailboxConnection(appUser.tenant_id),
     supabase.from('events').select('*').eq('id', eventId).single(),
     supabase.from('messages').select('id, is_approved, body').eq('event_id', eventId).eq('message_type', jobType).maybeSingle(),
     supabase.from('forms').select('is_published').eq('event_id', eventId).single(),
     getRecipientCandidates(eventId, jobType),
+    getActiveJobForType(eventId, jobType),
   ]);
 
   const isDemo = tenant?.is_demo ?? false;
@@ -70,6 +87,11 @@ export async function getPreflightStatusAction(eventId: string, jobType: SendJob
           : 'Your email is not connected yet.';
 
   const blockers: string[] = [];
+  if (activeJob) {
+    blockers.push(
+      `A send of this message is already ${activeJob.status} for this event — check Send history to pause, resume, or cancel it before starting another.`
+    );
+  }
   if (!mailboxReady) blockers.push(mailboxMessage);
   if (!message?.is_approved) blockers.push('This message has not been approved yet — approve it in Compose first.');
   if (jobType === 'invitation' && !form?.is_published) blockers.push('Your RSVP form is not published yet.');
@@ -137,15 +159,27 @@ export async function createSendJobAction(params: {
   const supabase = await createClient();
   const { eventId, jobType, paceProfile } = params;
 
-  const [{ data: tenant }, { data: event }, { data: message }, { data: form }, tenantSettings, candidates] = await Promise.all([
+  const [{ data: tenant }, { data: event }, { data: message }, { data: form }, tenantSettings, candidates, activeJob] = await Promise.all([
     supabase.from('tenants').select('is_demo').eq('id', appUser.tenant_id).single(),
     supabase.from('events').select('public_title').eq('id', eventId).single(),
     supabase.from('messages').select('id, subject, body, is_approved').eq('event_id', eventId).eq('message_type', jobType).single(),
     supabase.from('forms').select('public_token').eq('event_id', eventId).single(),
     getTenantSettings(appUser.tenant_id),
     getRecipientCandidates(eventId, jobType),
+    getActiveJobForType(eventId, jobType),
   ]);
 
+  // Re-checked here (not just in the preflight status the UI reads before
+  // showing the Send button) since preflight could be stale by the time this
+  // actually runs — without this, a second job for the same type would
+  // independently re-target the same not-yet-sent recipients as the first,
+  // risking the same message going out to the same person twice.
+  if (activeJob) {
+    return {
+      ok: false,
+      error: `A send of this message is already ${activeJob.status} for this event. Cancel or wait for it to finish before starting another.`,
+    };
+  }
   if (!message?.is_approved) return { ok: false, error: 'Approve this message before sending.' };
   if (candidates.length === 0) return { ok: false, error: 'There is no one to send to right now.' };
 

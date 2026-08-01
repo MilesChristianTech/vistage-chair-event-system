@@ -384,7 +384,7 @@ export interface Database {
             | 'cancellation'
             | 'thank_you'
             | 'post_event_follow_up';
-          pace_profile: 'fastest' | 'one_day' | 'two_day' | 'custom';
+          pace_profile: 'immediate' | 'fastest' | 'one_day' | 'two_day' | 'custom';
           starts_at: string;
           estimated_finish_at: string | null;
           status: 'queued' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed';
