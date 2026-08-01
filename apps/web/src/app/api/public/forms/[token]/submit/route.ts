@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { queueAutomaticRsvpConfirmation } from '@/lib/auto-confirmation';
 import type { Database, Json } from '@/lib/database.types';
 
 /**
@@ -125,6 +126,18 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
         .from('invitations')
         .update(patch as Database['public']['Tables']['invitations']['Update'])
         .eq('id', resolvedInvitationId);
+    }
+
+    // Unlike every other message type (which the Host sends manually as a
+    // batch), the RSVP confirmation goes out right away — that's the whole
+    // point of it being a confirmation. Silently no-ops if there's no
+    // approved rsvp_confirmation message yet.
+    if (patch.rsvp_status === 'yes') {
+      await queueAutomaticRsvpConfirmation(supabase, {
+        tenantId: form.tenant_id,
+        eventId: form.event_id,
+        invitationId: resolvedInvitationId,
+      });
     }
 
     await supabase.from('engagement_signals').insert({

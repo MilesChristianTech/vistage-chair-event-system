@@ -9,6 +9,7 @@ export interface MergeFieldContext {
   greetingName: string; // preferred name, falling back to first name — never blank (3.5)
   eventPublicTitle: string;
   formLink: string;
+  calendarLink?: string;
   hostDisplayName: string;
   hostSignature: string;
   personalTouch?: string | null;
@@ -24,6 +25,7 @@ export function resolveMergeFields(template: string, ctx: MergeFieldContext): st
     .replaceAll('{{greeting_name}}', ctx.greetingName)
     .replaceAll('{{event_title}}', ctx.eventPublicTitle)
     .replaceAll('{{form_link}}', ctx.formLink)
+    .replaceAll('{{calendar_link}}', ctx.calendarLink ?? '')
     .replaceAll('{{host_name}}', ctx.hostDisplayName)
     .replaceAll('{{host_signature}}', ctx.hostSignature);
 
@@ -41,6 +43,18 @@ export function resolveMergeFields(template: string, ctx: MergeFieldContext): st
   }
 
   return resolved;
+}
+
+// Only these message types get a calendar link auto-appended when the
+// underlying draft doesn't already reference the {{calendar_link}} tag
+// itself — a Host-written invitation might deliberately not want it, but a
+// confirmation/logistics message benefits from it by default.
+const CALENDAR_LINK_RELEVANT_TYPES = new Set(['rsvp_confirmation', 'final_details']);
+
+export function appendCalendarLinkIfRelevant(resolvedBody: string, jobType: string, calendarLink: string | null): string {
+  if (!calendarLink || !CALENDAR_LINK_RELEVANT_TYPES.has(jobType)) return resolvedBody;
+  if (resolvedBody.includes(calendarLink)) return resolvedBody; // template already used {{calendar_link}}
+  return `${resolvedBody}\n\nAdd to your calendar: ${calendarLink}`;
 }
 
 export function plainTextToHtml(text: string): string {

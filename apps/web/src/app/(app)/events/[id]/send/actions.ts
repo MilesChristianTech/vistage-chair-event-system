@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser, getTenantSettings, getMailboxConnection } from '@/lib/tenant';
 import { getPaceSpanMs, buildSendSchedule, type PaceProfile } from '@/lib/pacing';
 import { distributeVariants } from '@/lib/variant-distribution';
-import { resolveGreetingName, resolveMergeFields, plainTextToHtml } from '@/lib/merge-fields';
+import { resolveGreetingName, resolveMergeFields, plainTextToHtml, appendCalendarLinkIfRelevant } from '@/lib/merge-fields';
 
 export interface ActionResult {
   ok: boolean;
@@ -236,15 +236,19 @@ export async function createSendJobAction(params: {
     const bodyTemplate = variant?.body ?? message.body;
 
     const formLink = form ? `${appUrl}/r/${form.public_token}?i=${inv.public_token}` : '';
+    const calendarLink = form ? `${appUrl}/api/public/calendar/${form.public_token}` : null;
 
     const mergeCtx = {
       greetingName: person ? resolveGreetingName({ preferredName: person.preferred_name, firstName: person.first_name }) : 'there',
       eventPublicTitle: event?.public_title ?? '',
       formLink,
+      calendarLink: calendarLink ?? '',
       hostDisplayName: tenantSettings?.host_display_name ?? '',
       hostSignature: tenantSettings?.host_signature ?? tenantSettings?.host_display_name ?? '',
       personalTouch: jobType === 'invitation' ? inv.personalization_note : null,
     };
+
+    const resolvedBody = appendCalendarLinkIfRelevant(resolveMergeFields(bodyTemplate, mergeCtx), jobType, calendarLink);
 
     return {
       tenant_id: appUser.tenant_id,
@@ -252,7 +256,7 @@ export async function createSendJobAction(params: {
       invitation_id: inv.id,
       message_variant_id: variant?.id ?? null,
       resolved_subject: resolveMergeFields(subjectTemplate, mergeCtx),
-      resolved_body: plainTextToHtml(resolveMergeFields(bodyTemplate, mergeCtx)),
+      resolved_body: plainTextToHtml(resolvedBody),
       scheduled_at: (schedule[idx] ?? new Date()).toISOString(),
     };
   });
