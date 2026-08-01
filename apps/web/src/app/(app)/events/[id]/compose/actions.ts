@@ -15,7 +15,7 @@ import {
   type SuiteMessageKey,
 } from '@/lib/coach';
 import { AnthropicNotConfiguredError } from '@/lib/anthropic';
-import type { Database } from '@/lib/database.types';
+import type { Database, Json } from '@/lib/database.types';
 
 type MessageType = Database['public']['Tables']['messages']['Row']['message_type'];
 
@@ -99,12 +99,20 @@ export async function generateDraftAction(eventId: string, messageType: string):
   }
 }
 
+export interface AttachmentRef {
+  name: string;
+  url: string;
+}
+
 export async function saveMessageAction(
   messageId: string,
-  fields: { subject?: string; body?: string }
+  fields: { subject?: string; body?: string; attachment_urls?: AttachmentRef[] }
 ): Promise<ActionResult> {
   const supabase = await createClient();
-  const { error } = await supabase.from('messages').update({ ...fields, is_approved: false }).eq('id', messageId);
+  const { error } = await supabase
+    .from('messages')
+    .update({ ...fields, attachment_urls: fields.attachment_urls as unknown as Json, is_approved: false })
+    .eq('id', messageId);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

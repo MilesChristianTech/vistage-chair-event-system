@@ -74,7 +74,7 @@ export default async function ComposePage({ params }: { params: { id: string } }
     <AppPageBody>
       <ComposeClient
         eventId={params.id}
-        messages={sortedMessages}
+        messages={sortedMessages.map((m) => ({ ...m, attachment_urls: (m.attachment_urls as { name: string; url: string }[]) ?? [] }))}
         variants={variants ?? []}
         invitedCount={invitedCount}
         variantThreshold={settings?.variant_threshold ?? 60}

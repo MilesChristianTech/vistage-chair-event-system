@@ -10,6 +10,7 @@ import {
   strengthenDraftAction,
   approveMessageAction,
   generateSuiteAction,
+  type AttachmentRef,
 } from './actions';
 import VariantsPanel, { type VariantRow } from './variants-panel';
 import PersonalTouches, { type InviteeForTouch } from './personal-touches';
@@ -19,6 +20,7 @@ export interface MessageRow {
   message_type: string;
   subject: string | null;
   body: string;
+  attachment_urls: AttachmentRef[];
   is_approved: boolean;
 }
 
@@ -65,6 +67,7 @@ export default function ComposeClient({
 
   const [subject, setSubject] = useState(selected?.subject ?? '');
   const [body, setBody] = useState(selected?.body ?? '');
+  const [attachments, setAttachments] = useState<AttachmentRef[]>(selected?.attachment_urls ?? []);
   const [instruction, setInstruction] = useState('');
   const [improvements, setImprovements] = useState<string[] | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -74,15 +77,16 @@ export default function ComposeClient({
   useEffect(() => {
     setSubject(selected?.subject ?? '');
     setBody(selected?.body ?? '');
+    setAttachments(selected?.attachment_urls ?? []);
     setImprovements(null);
     setDirty(false);
     setError(null);
-  }, [selectedType, selected?.subject, selected?.body]);
+  }, [selectedType, selected?.subject, selected?.body, selected?.attachment_urls]);
 
   function save() {
     if (!selected) return;
     startTransition(async () => {
-      const result = await saveMessageAction(selected.id, { subject, body });
+      const result = await saveMessageAction(selected.id, { subject, body, attachment_urls: attachments });
       if (!result.ok) setError(result.error || 'Could not save.');
       else {
         setDirty(false);
@@ -90,6 +94,21 @@ export default function ComposeClient({
         router.refresh();
       }
     });
+  }
+
+  function addAttachment() {
+    setAttachments((a) => [...a, { name: '', url: '' }]);
+    setDirty(true);
+  }
+
+  function updateAttachment(index: number, patch: Partial<AttachmentRef>) {
+    setAttachments((a) => a.map((att, i) => (i === index ? { ...att, ...patch } : att)));
+    setDirty(true);
+  }
+
+  function removeAttachment(index: number) {
+    setAttachments((a) => a.filter((_, i) => i !== index));
+    setDirty(true);
   }
 
   function generate() {
@@ -279,6 +298,36 @@ export default function ComposeClient({
                       setDirty(true);
                     }}
                   />
+                </div>
+
+                <div className="mb-4">
+                  <label className="field-label">Attachments</label>
+                  <p className="field-hint mb-2">
+                    A link to a file (e.g. an event poster PDF) — hosted anywhere reachable by a plain URL. Attached
+                    to every email this message sends.
+                  </p>
+                  {attachments.map((att, i) => (
+                    <div key={i} className="flex gap-2 mb-2">
+                      <input
+                        className="input"
+                        placeholder="File name (e.g. Event Poster.pdf)"
+                        value={att.name}
+                        onChange={(e) => updateAttachment(i, { name: e.target.value })}
+                      />
+                      <input
+                        className="input"
+                        placeholder="https://…"
+                        value={att.url}
+                        onChange={(e) => updateAttachment(i, { url: e.target.value })}
+                      />
+                      <button type="button" className="btn-ghost text-xs shrink-0" onClick={() => removeAttachment(i)}>
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn-secondary text-xs" onClick={addAttachment}>
+                    Add attachment
+                  </button>
                 </div>
 
                 {improvements && improvements.length > 0 ? (

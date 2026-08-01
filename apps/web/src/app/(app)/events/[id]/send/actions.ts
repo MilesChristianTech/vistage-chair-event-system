@@ -162,7 +162,7 @@ export async function createSendJobAction(params: {
   const [{ data: tenant }, { data: event }, { data: message }, { data: form }, tenantSettings, candidates, activeJob] = await Promise.all([
     supabase.from('tenants').select('is_demo').eq('id', appUser.tenant_id).single(),
     supabase.from('events').select('public_title').eq('id', eventId).single(),
-    supabase.from('messages').select('id, subject, body, is_approved').eq('event_id', eventId).eq('message_type', jobType).single(),
+    supabase.from('messages').select('id, subject, body, attachment_urls, is_approved').eq('event_id', eventId).eq('message_type', jobType).single(),
     supabase.from('forms').select('public_token').eq('event_id', eventId).single(),
     getTenantSettings(appUser.tenant_id),
     getRecipientCandidates(eventId, jobType),
@@ -257,6 +257,7 @@ export async function createSendJobAction(params: {
       message_variant_id: variant?.id ?? null,
       resolved_subject: resolveMergeFields(subjectTemplate, mergeCtx),
       resolved_body: plainTextToHtml(resolvedBody),
+      attachment_urls: message.attachment_urls ?? [],
       scheduled_at: (schedule[idx] ?? new Date()).toISOString(),
     };
   });

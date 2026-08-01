@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { getServiceClient } from './supabase';
 import { decryptSecret } from './crypto';
 import { refreshAccessToken, sendMail, classifyGraphError } from './graph';
+import { resolveAttachments } from './attachments';
 
 /**
  * The send worker (Part 2.2, 7.6) — the single most important reliability
@@ -76,6 +77,7 @@ interface ClaimedRecipient {
   invitation_id: string;
   resolved_subject: string;
   resolved_body: string;
+  attachment_urls: { name?: string; url?: string }[] | null;
   attempt_count: number;
 }
 
@@ -128,12 +130,14 @@ async function processRecipient(row: ClaimedRecipient) {
   }
 
   const toName = [person.first_name, person.last_name].filter(Boolean).join(' ') || person.email;
+  const attachments = row.attachment_urls?.length ? await resolveAttachments(row.attachment_urls) : undefined;
   const result = await sendMail({
     accessToken: tokenResult.accessToken,
     toEmail: person.email,
     toName,
     subject: row.resolved_subject,
     htmlBody: row.resolved_body,
+    attachments,
   });
 
   if (result.ok) {

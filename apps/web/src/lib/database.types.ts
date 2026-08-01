@@ -218,6 +218,7 @@ export interface Database {
             | 'form_confirmation';
           subject: string | null;
           body: string;
+          attachment_urls: Json;
           is_approved: boolean;
           approved_at: string | null;
           approved_by: string | null;
@@ -415,6 +416,7 @@ export interface Database {
           message_variant_id: string | null;
           resolved_subject: string;
           resolved_body: string;
+          attachment_urls: Json;
           scheduled_at: string;
           sent_at: string | null;
           status: 'queued' | 'sent' | 'failed' | 'cancelled';

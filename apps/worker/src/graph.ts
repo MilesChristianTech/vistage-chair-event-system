@@ -25,12 +25,19 @@ export interface SendResult {
   error?: string;
 }
 
+export interface GraphAttachment {
+  name: string;
+  contentType: string;
+  contentBytes: string; // base64
+}
+
 export async function sendMail(params: {
   accessToken: string;
   toEmail: string;
   toName: string;
   subject: string;
   htmlBody: string;
+  attachments?: GraphAttachment[];
 }): Promise<SendResult> {
   const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
     method: 'POST',
@@ -40,6 +47,16 @@ export async function sendMail(params: {
         subject: params.subject,
         body: { contentType: 'HTML', content: params.htmlBody },
         toRecipients: [{ emailAddress: { address: params.toEmail, name: params.toName } }],
+        ...(params.attachments && params.attachments.length > 0
+          ? {
+              attachments: params.attachments.map((a) => ({
+                '@odata.type': '#microsoft.graph.fileAttachment',
+                name: a.name,
+                contentType: a.contentType,
+                contentBytes: a.contentBytes,
+              })),
+            }
+          : {}),
       },
       saveToSentItems: true,
     }),

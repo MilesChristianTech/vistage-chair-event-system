@@ -19,7 +19,7 @@ export async function queueAutomaticRsvpConfirmation(
 
   const { data: message } = await supabase
     .from('messages')
-    .select('id, subject, body, is_approved')
+    .select('id, subject, body, attachment_urls, is_approved')
     .eq('event_id', eventId)
     .eq('message_type', 'rsvp_confirmation')
     .maybeSingle();
@@ -95,6 +95,7 @@ export async function queueAutomaticRsvpConfirmation(
     message_variant_id: null,
     resolved_subject: resolveMergeFields(message.subject ?? '', mergeCtx),
     resolved_body: plainTextToHtml(resolvedBody),
+    attachment_urls: message.attachment_urls ?? [],
     scheduled_at: new Date().toISOString(),
   });
 
