@@ -145,18 +145,23 @@ export async function strengthenDraftAction(params: {
 }
 
 export async function approveMessageAction(messageId: string, approved: boolean): Promise<ActionResult> {
-  const { appUser } = await requireCurrentUser();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('messages')
-    .update({
-      is_approved: approved,
-      approved_at: approved ? new Date().toISOString() : null,
-      approved_by: approved ? appUser.id : null,
-    })
-    .eq('id', messageId);
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  try {
+    const { appUser } = await requireCurrentUser();
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from('messages')
+      .update({
+        is_approved: approved,
+        approved_at: approved ? new Date().toISOString() : null,
+        approved_by: approved ? appUser.id : null,
+      })
+      .eq('id', messageId);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (err) {
+    console.error('[approve-message]', err);
+    return { ok: false, error: 'Could not update approval status. Please try again.' };
+  }
 }
 
 export async function generateSuiteAction(eventId: string): Promise<ActionResult> {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   DndContext,
@@ -60,10 +60,18 @@ export default function FormBuilderClient({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(questions);
+  // `questions` only seeds state on mount — router.refresh() re-fetches it
+  // server-side after every add/remove/reorder, but without this the local
+  // copy never picks up the new prop, so changes only "appear" on a full
+  // page reload (which remounts the component from scratch).
+  useEffect(() => {
+    setItems(questions);
+  }, [questions]);
   const [introText, setIntroText] = useState(form.intro_text ?? '');
   const [confirmationText, setConfirmationText] = useState(form.confirmation_text ?? '');
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -84,29 +92,46 @@ export default function FormBuilderClient({
   }
 
   function addQuestion(type: string) {
+    setError(null);
     startTransition(async () => {
-      await addQuestionAction(form.id, type);
+      const result = await addQuestionAction(form.id, type);
+      if (!result.ok) {
+        setError(result.error || 'Could not add that question.');
+        return;
+      }
       router.refresh();
     });
   }
 
   function removeQuestion(id: string) {
+    setError(null);
     setItems((current) => current.filter((q) => q.id !== id));
     startTransition(async () => {
-      await deleteQuestionAction(id);
+      const result = await deleteQuestionAction(id);
+      if (!result.ok) setError(result.error || 'Could not remove that question.');
       router.refresh();
     });
   }
 
   function saveMeta() {
+    setError(null);
     startTransition(async () => {
-      await updateFormMetaAction(form.id, { intro_text: introText, confirmation_text: confirmationText });
+      const result = await updateFormMetaAction(form.id, { intro_text: introText, confirmation_text: confirmationText });
+      if (!result.ok) {
+        setError(result.error || 'Could not save.');
+        return;
+      }
       router.refresh();
     });
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {error ? (
+        <div className="lg:col-span-3 rounded border border-danger/30 bg-danger-bg text-danger text-sm px-4 py-3">
+          {error}
+        </div>
+      ) : null}
       <div className="lg:col-span-2 space-y-4">
         {responseCount > 0 ? (
           <div className="rounded border border-warn/30 bg-warn-bg text-warn text-sm px-4 py-3">

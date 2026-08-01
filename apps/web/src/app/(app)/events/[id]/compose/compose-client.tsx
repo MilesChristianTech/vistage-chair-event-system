@@ -141,8 +141,13 @@ export default function ComposeClient({
   function toggleApprove() {
     if (!selected) return;
     const willApprove = !selected.is_approved;
+    setError(null);
     startTransition(async () => {
-      await approveMessageAction(selected.id, willApprove);
+      const result = await approveMessageAction(selected.id, willApprove);
+      if (!result.ok) {
+        setError(result.error || 'Could not update approval status.');
+        return;
+      }
       toast.success(willApprove ? 'Approved.' : 'Approval removed — back to draft.');
       router.refresh();
     });
