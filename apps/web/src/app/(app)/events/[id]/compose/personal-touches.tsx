@@ -42,6 +42,7 @@ function TouchRow({ eventId, invitation }: { eventId: string; invitation: Invite
   const [showContextInput, setShowContextInput] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [dirty, setDirty] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function save() {
     startTransition(async () => {
@@ -53,6 +54,7 @@ function TouchRow({ eventId, invitation }: { eventId: string; invitation: Invite
 
   function suggest() {
     if (!invitation.person) return;
+    setError(null);
     startTransition(async () => {
       const result = await suggestHandwrittenTouchAction({
         eventId,
@@ -62,6 +64,8 @@ function TouchRow({ eventId, invitation }: { eventId: string; invitation: Invite
       if (result.ok && result.sentence) {
         setNote(result.sentence);
         setDirty(true);
+      } else {
+        setError(result.error || 'Could not suggest a line. Please try again.');
       }
     });
   }
@@ -92,6 +96,7 @@ function TouchRow({ eventId, invitation }: { eventId: string; invitation: Invite
           onChange={(e) => setContext(e.target.value)}
         />
       ) : null}
+      {error ? <p className="text-sm text-danger bg-danger-bg rounded px-3 py-2 mb-2">{error}</p> : null}
       <div className="flex items-center gap-2">
         <button className="btn-secondary text-xs" onClick={() => setShowContextInput((s) => !s)}>
           {showContextInput ? 'Hide context' : 'Add context'}
