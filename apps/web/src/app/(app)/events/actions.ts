@@ -112,6 +112,100 @@ export async function deleteEventAction(eventId: string): Promise<ActionResult> 
   redirect('/events');
 }
 
+/** "Templates" (Part request: reuse a past event's setup instead of
+ * re-typing everything each time) — implemented as duplicating an existing
+ * event rather than a separate template entity, so every real event
+ * doubles as a reusable starting point. Copies the event's facts, its
+ * form's structure/text/branding, and its message drafts. Deliberately does
+ * NOT copy the date/time, RSVP deadline, invitees, responses, or send
+ * history — those are specific to the original occurrence, and draft
+ * messages are reset to unapproved since logistics will need review before
+ * they're accurate for the new date. */
+export async function duplicateEventAction(eventId: string): Promise<ActionResult> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const { data: source } = await supabase.from('events').select('*').eq('id', eventId).eq('tenant_id', appUser.tenant_id).single();
+  if (!source) return { ok: false, error: 'Event not found.' };
+
+  const { data: newEvent, error: eventError } = await supabase
+    .from('events')
+    .insert({
+      tenant_id: appUser.tenant_id,
+      internal_name: `${source.internal_name} (copy)`,
+      public_title: source.public_title,
+      event_type_id: source.event_type_id,
+      purpose: source.purpose,
+      audience_description: source.audience_description,
+      value_proposition: source.value_proposition,
+      speaker_details: source.speaker_details,
+      time_zone: source.time_zone,
+      is_virtual: source.is_virtual,
+      venue_name: source.venue_name,
+      venue_address: source.venue_address,
+      parking_notes: source.parking_notes,
+      virtual_link: source.virtual_link,
+      capacity: source.capacity,
+      status: 'draft',
+    })
+    .select('id')
+    .single();
+
+  if (eventError || !newEvent) return { ok: false, error: eventError?.message ?? 'Could not duplicate the event.' };
+
+  const { data: sourceForm } = await supabase.from('forms').select('*').eq('event_id', eventId).maybeSingle();
+
+  const { data: newForm } = await supabase
+    .from('forms')
+    .insert({
+      tenant_id: appUser.tenant_id,
+      event_id: newEvent.id,
+      intro_text: sourceForm?.intro_text ?? null,
+      confirmation_text: sourceForm?.confirmation_text ?? null,
+      theme: sourceForm?.theme ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (sourceForm && newForm) {
+    const { data: sourceQuestions } = await supabase
+      .from('form_questions')
+      .select('question_type, label, help_text, is_required, sort_order, options')
+      .eq('form_id', sourceForm.id)
+      .order('sort_order');
+
+    if (sourceQuestions && sourceQuestions.length > 0) {
+      await supabase.from('form_questions').insert(
+        sourceQuestions.map((q) => ({
+          tenant_id: appUser.tenant_id,
+          form_id: newForm.id,
+          ...q,
+        }))
+      );
+    }
+  }
+
+  const { data: sourceMessages } = await supabase
+    .from('messages')
+    .select('message_type, subject, body')
+    .eq('event_id', eventId);
+
+  if (sourceMessages && sourceMessages.length > 0) {
+    await supabase.from('messages').insert(
+      sourceMessages.map((m) => ({
+        tenant_id: appUser.tenant_id,
+        event_id: newEvent.id,
+        message_type: m.message_type,
+        subject: m.subject,
+        body: m.body,
+        is_approved: false,
+      }))
+    );
+  }
+
+  redirect(`/events/${newEvent.id}/setup`);
+}
+
 // ---------------------------------------------------------------------------
 // Invitees (Part 5.1 step 2, Part 3.4)
 // ---------------------------------------------------------------------------

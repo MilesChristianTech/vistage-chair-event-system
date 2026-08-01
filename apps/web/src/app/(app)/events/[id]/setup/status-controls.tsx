@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import ConfirmAction from '@/components/confirm-action';
-import { updateEventStatusAction, deleteEventAction } from '../../actions';
+import { updateEventStatusAction, deleteEventAction, duplicateEventAction } from '../../actions';
 
 const STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft' },
@@ -14,6 +15,8 @@ const STATUS_OPTIONS = [
 
 export default function EventStatusControls({ event }: { event: { id: string; status: string; public_title: string } }) {
   const router = useRouter();
+  const [isDuplicating, startDuplicate] = useTransition();
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   return (
     <div className="card p-4 space-y-4">
@@ -34,6 +37,27 @@ export default function EventStatusControls({ event }: { event: { id: string; st
           ))}
         </select>
         <p className="field-hint">Status shapes what the app shows and suggests — it never blocks you from editing.</p>
+      </div>
+
+      <div className="pt-3 border-t border-navy-100">
+        <button
+          className="btn-secondary w-full justify-center"
+          disabled={isDuplicating}
+          onClick={() => {
+            setDuplicateError(null);
+            startDuplicate(async () => {
+              const result = await duplicateEventAction(event.id);
+              if (result && !result.ok) setDuplicateError(result.error || 'Could not duplicate this event.');
+            });
+          }}
+        >
+          {isDuplicating ? 'Duplicating…' : 'Duplicate this event'}
+        </button>
+        <p className="field-hint">
+          Copies the event facts, form questions, and message drafts into a new draft event — a quick way to reuse a
+          past event as a starting point. Date, invitees, and responses are never carried over.
+        </p>
+        {duplicateError ? <p className="text-sm text-danger mt-2">{duplicateError}</p> : null}
       </div>
 
       <div className="pt-3 border-t border-navy-100">
