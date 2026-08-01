@@ -1,25 +1,45 @@
+import { LogOut } from 'lucide-react';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
 import { signOutAction } from '@/app/sign-in/actions';
 import NavLinks from './nav-links';
+import CommandPalette from '@/components/command-palette';
+import { Toaster } from 'sonner';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
   const { data: tenant } = await supabase.from('tenants').select('name, is_demo').eq('id', appUser.tenant_id).single();
 
+  const initials = appUser.display_name
+    .split(' ')
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
   return (
     <div className="min-h-screen flex bg-paper">
-      <aside className="w-60 shrink-0 bg-navy-900 flex flex-col">
-        <div className="px-5 py-5 border-b border-white/10">
+      <Toaster position="bottom-right" toastOptions={{ className: 'font-sans text-sm' }} />
+
+      <aside className="relative w-60 shrink-0 flex flex-col bg-gradient-to-b from-navy-950 to-navy-975">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-white/0 via-white/10 to-white/0" />
+
+        <div className="px-5 py-5 border-b border-white/[0.07]">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gold-400 text-navy-950 font-serif text-sm">
-              C
+            <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg shrink-0">
+              <span className="absolute inset-0 rounded-lg bg-gradient-to-br from-gold-300 to-gold-500 shadow-glow" />
+              <span className="absolute inset-[1px] rounded-[7px] bg-gradient-to-br from-navy-900 to-navy-950" />
+              <span className="relative font-serif text-sm bg-gradient-to-br from-gold-200 to-gold-400 bg-clip-text text-transparent">
+                C
+              </span>
             </span>
             <span className="text-white font-serif text-base leading-tight">Chair Event System</span>
           </div>
           {tenant?.is_demo ? (
-            <span className="badge-warn mt-3 inline-flex bg-gold-400/20 text-gold-200">Demo tenant</span>
+            <span className="badge-warn mt-3 inline-flex bg-gold-400/15 text-gold-200 border border-gold-400/20">
+              Demo tenant
+            </span>
           ) : null}
         </div>
 
@@ -27,13 +47,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <NavLinks />
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/10">
-          <div className="px-3 mb-2">
-            <p className="text-white text-sm font-medium truncate">{appUser.display_name}</p>
-            <p className="text-navy-300 text-xs truncate">{tenant?.name}</p>
+        <div className="px-3 py-4 border-t border-white/[0.07]">
+          <div className="flex items-center gap-2.5 px-1 mb-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-navy-600 to-navy-800 text-[11px] font-semibold text-white ring-1 ring-white/10">
+              {initials}
+            </span>
+            <div className="min-w-0">
+              <p className="text-white text-sm font-medium truncate leading-tight">{appUser.display_name}</p>
+              <p className="text-navy-400 text-xs truncate">{tenant?.name}</p>
+            </div>
           </div>
           <form action={signOutAction}>
             <button type="submit" className="nav-link w-full justify-start">
+              <LogOut className="h-4 w-4" strokeWidth={1.75} />
               Sign out
             </button>
           </form>
@@ -41,6 +67,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex items-center justify-end border-b border-navy-100 bg-white/80 backdrop-blur px-6 py-2.5">
+          <CommandPalette />
+        </div>
         <main className="flex-1 min-w-0">{children}</main>
       </div>
     </div>

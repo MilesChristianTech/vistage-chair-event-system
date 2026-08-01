@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import ConfirmAction from '@/components/confirm-action';
 import { setPersonActiveAction, deletePersonAction } from '../actions';
 
@@ -19,6 +20,7 @@ export default function PersonActions({
           triggerClassName="btn-secondary"
           consequence={`${person.first_name} ${person.last_name} will be hidden from active contact lists, but every past event and note stays intact. You can reactivate them anytime.`}
           confirmLabel="Mark inactive"
+          successMessage={`${person.first_name} marked inactive.`}
           onConfirm={async () => {
             const result = await setPersonActiveAction(person.id, false);
             router.refresh();
@@ -30,6 +32,7 @@ export default function PersonActions({
           className="btn-secondary"
           onClick={async () => {
             await setPersonActiveAction(person.id, true);
+            toast.success(`${person.first_name} reactivated.`);
             router.refresh();
           }}
         >

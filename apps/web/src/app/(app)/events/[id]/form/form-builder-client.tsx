@@ -190,6 +190,7 @@ export default function FormBuilderClient({
                 triggerClassName="btn-secondary w-full justify-center"
                 consequence="This takes the form offline — anyone who visits the link will see it's no longer accepting responses. Already-collected responses are unaffected."
                 confirmLabel="Unpublish"
+                successMessage="Form taken offline."
                 onConfirm={async () => {
                   const result = await publishFormAction(form.id, false);
                   router.refresh();
@@ -203,6 +204,7 @@ export default function FormBuilderClient({
               triggerClassName="btn-primary w-full justify-center"
               consequence={`This makes your RSVP form live at a public link${items.length === 0 ? ' — you haven\'t added any questions yet' : ''}. You can keep editing it after publishing.`}
               confirmLabel="Publish"
+              successMessage="Your form is live."
               onConfirm={async () => {
                 const result = await publishFormAction(form.id, true);
                 router.refresh();

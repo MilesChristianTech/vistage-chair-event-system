@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 /**
  * The gate for every consequential action in the product (Part 6.2): a
@@ -14,12 +17,14 @@ export default function ConfirmAction({
   triggerClassName = 'btn-danger',
   consequence,
   confirmLabel = 'Yes, continue',
+  successMessage,
   onConfirm,
 }: {
   triggerLabel: string;
   triggerClassName?: string;
   consequence: string;
   confirmLabel?: string;
+  successMessage?: string;
   onConfirm: () => Promise<{ ok: boolean; error?: string } | void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -35,31 +40,43 @@ export default function ConfirmAction({
   }
 
   return (
-    <div className="card p-4 bg-warn-bg border-warn/30 max-w-md">
-      <p className="text-sm text-navy-900 mb-3">{consequence}</p>
-      {error ? <p className="text-sm text-danger mb-3">{error}</p> : null}
-      <div className="flex items-center gap-2">
-        <button
-          className="btn-danger"
-          disabled={isPending}
-          onClick={() => {
-            setError(null);
-            startTransition(async () => {
-              const result = await onConfirm();
-              if (result && !result.ok) {
-                setError(result.error || 'Something went wrong. Please try again.');
-                return;
-              }
-              setOpen(false);
-            });
-          }}
-        >
-          {isPending ? 'Working…' : confirmLabel}
-        </button>
-        <button className="btn-ghost" disabled={isPending} onClick={() => setOpen(false)}>
-          Cancel
-        </button>
-      </div>
-    </div>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -4, height: 0 }}
+        animate={{ opacity: 1, y: 0, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="rounded-lg border border-warn/25 bg-warn-bg/70 backdrop-blur-sm p-4 max-w-md shadow-xs"
+      >
+        <div className="flex gap-2.5">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-warn" strokeWidth={1.75} />
+          <p className="text-sm text-navy-900">{consequence}</p>
+        </div>
+        {error ? <p className="text-sm text-danger mt-3">{error}</p> : null}
+        <div className="flex items-center gap-2 mt-3">
+          <button
+            className="btn-danger"
+            disabled={isPending}
+            onClick={() => {
+              setError(null);
+              startTransition(async () => {
+                const result = await onConfirm();
+                if (result && !result.ok) {
+                  setError(result.error || 'Something went wrong. Please try again.');
+                  return;
+                }
+                if (successMessage) toast.success(successMessage);
+                setOpen(false);
+              });
+            }}
+          >
+            {isPending ? 'Working…' : confirmLabel}
+          </button>
+          <button className="btn-ghost" disabled={isPending} onClick={() => setOpen(false)}>
+            Cancel
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

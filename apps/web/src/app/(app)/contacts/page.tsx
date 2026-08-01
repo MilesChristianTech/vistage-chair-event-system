@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
+import Avatar from '@/components/avatar';
 
 export const dynamic = 'force-dynamic';
 
@@ -105,11 +106,18 @@ export default async function ContactsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-navy-100">
-                {people.map((p) => (
-                  <tr key={p.id} className="hover:bg-navy-50">
+                {people.map((p, i) => (
+                  <tr
+                    key={p.id}
+                    style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}
+                    className="animate-fade-up hover:bg-navy-50 transition-colors duration-150"
+                  >
                     <td className="px-4 py-2.5">
-                      <Link href={`/contacts/${p.id}`} className="font-medium text-navy-900 no-underline hover:underline">
-                        {p.first_name} {p.last_name}
+                      <Link href={`/contacts/${p.id}`} className="flex items-center gap-2.5 no-underline group">
+                        <Avatar firstName={p.first_name} lastName={p.last_name} size="sm" />
+                        <span className="font-medium text-navy-900 group-hover:underline">
+                          {p.first_name} {p.last_name}
+                        </span>
                       </Link>
                       {p.preferred_name ? <span className="text-navy-400 text-xs"> ({p.preferred_name})</span> : null}
                       {!p.is_active ? <span className="badge-neutral ml-2">Inactive</span> : null}

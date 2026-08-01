@@ -1,5 +1,16 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import {
+  Send,
+  TrendingUp,
+  CheckCircle2,
+  UsersRound,
+  HelpCircle,
+  MailQuestion,
+  Gauge,
+  AlertTriangle,
+  type LucideIcon,
+} from 'lucide-react';
 import { AppPageBody } from '@/components/page-header';
 import { createClient } from '@/lib/supabase/server';
 import { getEventMetrics, buildNextActions } from '@/lib/metrics';
@@ -47,18 +58,26 @@ export default async function EventDashboardPage({
   return (
     <AppPageBody>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <MetricCard label="Invited" value={metrics.invited} />
-        <MetricCard label="Response rate" value={formatPct(metrics.responseRate)} />
-        <MetricCard label="Yes" value={metrics.yes} accent />
-        <MetricCard label="Expected headcount" value={metrics.expectedHeadcount} />
-        <MetricCard label="Maybe" value={metrics.maybe} />
-        <MetricCard label="No response" value={metrics.noResponse} />
+        <MetricCard label="Invited" value={metrics.invited} icon={Send} index={0} />
+        <MetricCard label="Response rate" value={formatPct(metrics.responseRate)} icon={TrendingUp} index={1} />
+        <MetricCard label="Yes" value={metrics.yes} icon={CheckCircle2} accent="success" index={2} />
+        <MetricCard label="Expected headcount" value={metrics.expectedHeadcount} icon={UsersRound} index={3} />
+        <MetricCard label="Maybe" value={metrics.maybe} icon={HelpCircle} accent="warn" index={4} />
+        <MetricCard label="No response" value={metrics.noResponse} icon={MailQuestion} index={5} />
         <MetricCard
           label="Capacity"
           value={metrics.capacity != null ? `${metrics.expectedHeadcount}/${metrics.capacity}` : '—'}
-          warn={metrics.isOverCapacity}
+          icon={Gauge}
+          accent={metrics.isOverCapacity ? 'danger' : undefined}
+          index={6}
         />
-        <MetricCard label="Exceptions" value={metrics.exceptions} warn={metrics.exceptions > 0} />
+        <MetricCard
+          label="Exceptions"
+          value={metrics.exceptions}
+          icon={AlertTriangle}
+          accent={metrics.exceptions > 0 ? 'danger' : undefined}
+          index={7}
+        />
       </div>
 
       <EngagementNote />
@@ -69,9 +88,14 @@ export default async function EventDashboardPage({
           {nextActions.length === 0 ? (
             <div className="card p-4 text-sm text-navy-500">Nothing urgent — you're caught up.</div>
           ) : (
-            <div className="card divide-y divide-navy-100">
-              {nextActions.map((action) => (
-                <Link key={action.id} href={action.href} className="block px-4 py-3 text-sm hover:bg-navy-50">
+            <div className="card divide-y divide-navy-100 overflow-hidden">
+              {nextActions.map((action, i) => (
+                <Link
+                  key={action.id}
+                  href={action.href}
+                  style={{ animationDelay: `${i * 50}ms` }}
+                  className="animate-fade-up block px-4 py-3 text-sm hover:bg-navy-50 transition-colors duration-200"
+                >
                   {action.label}
                 </Link>
               ))}
@@ -120,10 +144,33 @@ function formatPct(value: number | null): string {
   return `${Math.round(value * 100)}%`;
 }
 
-function MetricCard({ label, value, accent, warn }: { label: string; value: string | number; accent?: boolean; warn?: boolean }) {
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+  index = 0,
+}: {
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
+  accent?: 'success' | 'warn' | 'danger';
+  index?: number;
+}) {
+  const valueColor = accent ? { success: 'text-success', warn: 'text-warn', danger: 'text-danger' }[accent] : 'text-navy-950';
+  const iconBg = accent
+    ? { success: 'from-emerald-400 to-success', warn: 'from-amber-300 to-warn', danger: 'from-rose-400 to-danger' }[accent]
+    : 'from-navy-600 to-navy-800';
+
   return (
-    <div className="card p-4">
-      <p className={`text-2xl font-semibold ${warn ? 'text-danger' : accent ? 'text-success' : 'text-navy-900'}`}>{value}</p>
+    <div
+      style={{ animationDelay: `${index * 50}ms` }}
+      className="card-interactive animate-fade-up p-4"
+    >
+      <div className={`mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br ${iconBg} text-white`}>
+        <Icon className="h-4 w-4" strokeWidth={1.75} />
+      </div>
+      <p className={`text-2xl font-semibold tabular-nums ${valueColor}`}>{value}</p>
       <p className="text-xs text-navy-500 uppercase tracking-wide mt-1">{label}</p>
     </div>
   );

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
+import Avatar from '@/components/avatar';
 import ProfileEditor from './profile-editor';
 import NotesPanel from './notes-panel';
 import PersonActions from './person-actions';
@@ -72,6 +73,7 @@ export default async function PersonProfilePage({ params }: { params: { id: stri
   return (
     <>
       <AppPageHeader
+        icon={<Avatar firstName={person.first_name} lastName={person.last_name} />}
         title={`${person.first_name} ${person.last_name}`}
         description={person.company ? `${person.title ? `${person.title} at ` : ''}${person.company}` : undefined}
         actions={<PersonActions person={person} />}

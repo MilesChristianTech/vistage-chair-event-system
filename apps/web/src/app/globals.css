@@ -5,6 +5,7 @@
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    color-scheme: light;
   }
 
   body {
@@ -15,16 +16,44 @@
 
   h1, h2, h3, h4 {
     @apply font-serif text-navy-900;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.01em;
   }
 
-  h1 { @apply text-3xl font-normal mb-2; }
+  h1 { @apply text-3xl font-normal mb-2; letter-spacing: -0.015em; }
   h2 { @apply text-2xl font-normal mb-2; }
-  h3 { @apply text-lg font-semibold mb-1; }
+  h3 { @apply text-lg font-semibold mb-1; letter-spacing: -0.005em; }
 
   a {
     @apply text-navy-700 underline decoration-navy-200 underline-offset-2;
   }
+
+  /* A calmer, more deliberate focus ring than the browser default — still
+     always visible (10.3 accessibility is non-negotiable), just refined. */
+  :focus-visible {
+    outline: 2px solid theme('colors.gold.400');
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: theme('colors.gold.200');
+    color: theme('colors.navy.950');
+  }
+
+  /* Custom scrollbar — subtle, not the bare-metal OS default. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.navy.200') transparent;
+  }
+  *::-webkit-scrollbar { width: 9px; height: 9px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: theme('colors.navy.200');
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: theme('colors.navy.300'); background-clip: padding-box; }
 
   /* Never convey meaning by color alone (10.3) — every status also gets a
      label or icon in markup; these classes are the color half only. */
@@ -35,28 +64,48 @@
 
 @layer components {
   .card {
-    @apply bg-white border border-navy-100 rounded-md shadow-card;
+    @apply bg-white border border-navy-100/80 rounded-lg shadow-card transition-all duration-300 ease-premium;
+  }
+
+  .card-interactive {
+    @apply card hover:shadow-card-hover hover:border-navy-200 hover:-translate-y-0.5;
+  }
+
+  .glass-dark {
+    @apply bg-navy-950/70 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-light {
+    @apply bg-white/70 backdrop-blur-xl border border-white/60;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded px-4 py-2 text-sm font-medium
-           transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply relative inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium
+           transition-all duration-200 ease-premium disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-[0.98] overflow-hidden;
   }
 
   .btn-primary {
-    @apply btn bg-navy-900 text-white hover:bg-navy-800;
+    @apply btn text-white shadow-glow-navy;
+    background: linear-gradient(180deg, theme('colors.navy.800') 0%, theme('colors.navy.900') 100%);
   }
+  .btn-primary:hover { background: linear-gradient(180deg, theme('colors.navy.700') 0%, theme('colors.navy.800') 100%); }
 
   .btn-secondary {
-    @apply btn bg-white text-navy-900 border border-navy-200 hover:bg-navy-50;
+    @apply btn bg-white text-navy-900 border border-navy-200 shadow-xs hover:bg-navy-50 hover:border-navy-300;
   }
 
   .btn-danger {
-    @apply btn bg-white text-danger border border-danger/30 hover:bg-danger-bg;
+    @apply btn bg-white text-danger border border-danger/25 hover:bg-danger-bg hover:border-danger/40;
   }
 
   .btn-ghost {
-    @apply btn text-navy-700 hover:bg-navy-50;
+    @apply btn text-navy-700 hover:bg-navy-100/70;
+  }
+
+  .btn-gold {
+    @apply btn text-navy-950 font-semibold shadow-glow;
+    background: linear-gradient(135deg, theme('colors.gold.300') 0%, theme('colors.gold.400') 50%, theme('colors.gold.300') 100%);
   }
 
   .field-label {
@@ -68,8 +117,9 @@
   }
 
   .input {
-    @apply w-full rounded border border-navy-200 bg-white px-3 py-2 text-sm text-ink
-           placeholder:text-navy-400 focus:outline-none focus:ring-2 focus:ring-navy-300 focus:border-navy-400;
+    @apply w-full rounded-md border border-navy-200 bg-white px-3 py-2 text-sm text-ink
+           placeholder:text-navy-400 transition-all duration-150 ease-premium
+           focus:outline-none focus:ring-4 focus:ring-navy-100 focus:border-navy-400;
   }
 
   .badge {
@@ -82,10 +132,17 @@
   .badge-neutral { @apply badge bg-navy-100 text-navy-700; }
 
   .nav-link {
-    @apply flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-navy-100/90 hover:bg-white/10 hover:text-white transition-colors;
+    @apply relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-navy-200/80
+           hover:bg-white/[0.06] hover:text-white transition-all duration-200 ease-premium;
   }
 
   .nav-link-active {
-    @apply nav-link bg-white/10 text-white;
+    @apply nav-link bg-white/[0.08] text-white shadow-inner-line;
+  }
+
+  /* Subtle shimmering sheen used for skeletons and progress fills. */
+  .shimmer-surface {
+    background-size: 200% 100%;
+    @apply bg-gradient-to-r from-navy-100 via-navy-50 to-navy-100 animate-shimmer;
   }
 }
