@@ -52,7 +52,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  if (user && (pathname === '/sign-in' || pathname === '/')) {
+  // Signed-in users get bounced off /sign-in (nothing to do there), but '/'
+  // stays reachable even while signed in — it's the marketing page, and a
+  // signed-in Host should still be able to click back to it from the app.
+  if (user && pathname === '/sign-in') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

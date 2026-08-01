@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import MarketingLanding from './marketing-landing';
 
@@ -8,7 +7,5 @@ export default async function RootPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) redirect('/dashboard');
-
-  return <MarketingLanding />;
+  return <MarketingLanding isSignedIn={Boolean(user)} />;
 }

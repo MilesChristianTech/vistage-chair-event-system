@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LogOut } from 'lucide-react';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
@@ -30,10 +31,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-white/0 via-white/10 to-white/0" />
 
         <div className="shrink-0 px-5 py-5 border-b border-white/[0.07]">
-          <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5 no-underline">
             <BrandMark />
             <span className="text-white font-serif text-base leading-tight">Chair Event System</span>
-          </div>
+          </Link>
           {tenant?.is_demo ? (
             <span className="badge-warn mt-3 inline-flex bg-gold-400/15 text-gold-200 border border-gold-400/20">
               Demo tenant

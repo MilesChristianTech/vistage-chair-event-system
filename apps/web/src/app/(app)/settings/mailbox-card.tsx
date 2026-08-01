@@ -41,6 +41,7 @@ export default function MailboxCard({ mailbox }: { mailbox: Mailbox }) {
           triggerClassName="btn-secondary"
           consequence="This stops all future sends for your account until you reconnect. Anything already sent is unaffected."
           confirmLabel="Disconnect"
+          successMessage="Your Microsoft account has been disconnected."
           onConfirm={async () => {
             const result = await disconnectMailboxAction();
             router.refresh();

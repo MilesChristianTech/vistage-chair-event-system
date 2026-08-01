@@ -5,14 +5,11 @@ import HostProfileForm from './host-profile-form';
 import BrandingForm from './branding-form';
 import ChangePasswordForm from './change-password-form';
 import AdvancedSettingsForm from './advanced-settings-form';
+import MailboxOAuthToast from './mailbox-oauth-toast';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SettingsPage({
-  searchParams,
-}: {
-  searchParams: { ms_connected?: string; ms_error?: string };
-}) {
+export default async function SettingsPage() {
   const { appUser } = await requireCurrentUser();
   const [settings, mailbox] = await Promise.all([getTenantSettings(appUser.tenant_id), getMailboxConnection(appUser.tenant_id)]);
 
@@ -20,20 +17,8 @@ export default async function SettingsPage({
     <>
       <AppPageHeader title="Settings" description="Connections, branding, and your account." />
       <AppPageBody>
+        <MailboxOAuthToast />
         <div className="max-w-2xl space-y-6">
-          {searchParams.ms_connected ? (
-            <div className="rounded border border-success/30 bg-success-bg text-success text-sm px-4 py-3">
-              Your Microsoft account is connected.
-            </div>
-          ) : null}
-          {searchParams.ms_error ? (
-            <div className="rounded border border-danger/30 bg-danger-bg text-danger text-sm px-4 py-3">
-              {searchParams.ms_error === 'not_configured'
-                ? "Microsoft sign-in isn't set up yet — this is a one-time step for the operator (see the Owner Setup Checklist)."
-                : "Couldn't connect your Microsoft account. Please try again."}
-            </div>
-          ) : null}
-
           <section className="card p-5">
             <h3>Email connection</h3>
             <p className="text-navy-500 text-sm mb-4">

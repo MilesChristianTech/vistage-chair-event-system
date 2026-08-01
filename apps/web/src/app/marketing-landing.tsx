@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Users, Sparkles, ClipboardList, Send, LineChart, Check, type LucideIcon } from 'lucide-react';
 import BrandMark from '@/components/brand-mark';
+import { signOutAction } from '@/app/sign-in/actions';
 
 // The public marketing front door. Distinct from the sign-in screen (Part
 // 2.5 of the original build spec deliberately kept that minimal) — this is
@@ -10,7 +11,7 @@ import BrandMark from '@/components/brand-mark';
 // Vistage Chairs — a peer recommendation — not as an official Vistage
 // product. No Vistage trademark/logo is used here pending confirmation
 // there's authorization to use it (see chat).
-export default function MarketingLanding() {
+export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: boolean }) {
   return (
     <main className="bg-paper">
       {/* ---------- Hero ---------- */}
@@ -19,13 +20,26 @@ export default function MarketingLanding() {
         <div className="absolute inset-0 bg-grid-lines bg-[length:42px_42px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,black_10%,transparent_75%)]" aria-hidden />
 
         <header className="relative max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5 no-underline">
             <BrandMark />
             <span className="text-white font-serif text-base">Chair Event System</span>
-          </div>
-          <Link href="/sign-in" className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20">
-            Sign in
           </Link>
+          {isSignedIn ? (
+            <div className="flex items-center gap-3">
+              <Link href="/dashboard" className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20">
+                Go to dashboard
+              </Link>
+              <form action={signOutAction}>
+                <button type="submit" className="btn-secondary bg-transparent border-white/25 text-white hover:bg-white/10">
+                  Log out
+                </button>
+              </form>
+            </div>
+          ) : (
+            <Link href="/sign-in" className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20">
+              Sign in
+            </Link>
+          )}
         </header>
 
         <div className="relative max-w-3xl mx-auto px-6 pt-10 pb-24 text-center animate-fade-up">
@@ -41,8 +55,8 @@ export default function MarketingLanding() {
             place. Every invitation still goes out from your own inbox, written in your own voice.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Link href="/sign-in" className="btn-gold">
-              Sign in to your account
+            <Link href={isSignedIn ? '/dashboard' : '/sign-in'} className="btn-gold">
+              {isSignedIn ? 'Go to your dashboard' : 'Sign in to your account'}
             </Link>
             <a href="mailto:hello@chaireventsystem.com" className="btn-secondary bg-transparent border-white/25 text-white hover:bg-white/10">
               Ask about getting set up

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import BrandMark from '@/components/brand-mark';
 
@@ -26,7 +27,9 @@ export default function SignInShell({ children }: { children: React.ReactNode })
             transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="inline-flex mb-5"
           >
-            <BrandMark size="lg" />
+            <Link href="/">
+              <BrandMark size="lg" />
+            </Link>
           </motion.div>
           <h1 className="text-white font-serif text-2xl">Chair Event System</h1>
           <p className="text-navy-300 text-sm mt-1.5">Sign in to continue</p>
