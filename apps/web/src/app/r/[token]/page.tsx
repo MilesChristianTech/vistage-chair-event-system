@@ -24,24 +24,43 @@ export default async function PublicRsvpPage({
     );
   }
 
+  const { branding } = data;
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-navy-975 py-10 px-4">
       <div className="absolute inset-0 bg-aurora-navy animate-aurora" aria-hidden />
       <div className="relative max-w-xl mx-auto">
         <div className="rounded-xl p-[1px] bg-gradient-to-b from-white/25 via-white/10 to-transparent shadow-glow-navy">
-          <div className="rounded-[11px] bg-white p-8">
-            <p className="text-navy-400 text-xs uppercase tracking-wide mb-1">You’re invited</p>
-            <h1 className="text-2xl mb-3">{data.event.publicTitle}</h1>
+          <div className="rounded-[11px] bg-white overflow-hidden">
+            {branding.headerImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branding.headerImageUrl} alt="" className="w-full h-32 object-cover" />
+            ) : null}
+            <div className="p-8">
+              {branding.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={branding.logoUrl} alt="" className="h-12 max-w-[200px] object-contain mb-5" />
+              ) : null}
+              <p
+                className="text-xs uppercase tracking-wide mb-1"
+                style={{ color: branding.accentColor ?? undefined }}
+              >
+                You’re invited
+              </p>
+              <h1 className="text-2xl mb-3" style={{ color: branding.primaryColor ?? undefined }}>
+                {data.event.publicTitle}
+              </h1>
 
-            <div className="text-sm text-navy-600 space-y-1 mb-5 bg-navy-50 rounded-md p-4">
-              {data.event.startsAtFormatted ? <p>{data.event.startsAtFormatted}</p> : null}
-              {data.event.venueLine ? <p>{data.event.venueLine}</p> : null}
-              {data.event.rsvpDeadlineFormatted ? <p>Please respond by {data.event.rsvpDeadlineFormatted}</p> : null}
+              <div className="text-sm text-navy-600 space-y-1 mb-5 bg-navy-50 rounded-md p-4">
+                {data.event.startsAtFormatted ? <p>{data.event.startsAtFormatted}</p> : null}
+                {data.event.venueLine ? <p>{data.event.venueLine}</p> : null}
+                {data.event.rsvpDeadlineFormatted ? <p>Please respond by {data.event.rsvpDeadlineFormatted}</p> : null}
+              </div>
+
+              {data.introText ? <p className="text-navy-700 text-sm mb-5">{data.introText}</p> : null}
+
+              <RsvpFormClient token={params.token} data={data} accentColor={branding.accentColor} />
             </div>
-
-            {data.introText ? <p className="text-navy-700 text-sm mb-5">{data.introText}</p> : null}
-
-            <RsvpFormClient token={params.token} data={data} />
           </div>
         </div>
         <p className="text-center text-navy-400 text-xs mt-4">Powered by the Chair Event System</p>

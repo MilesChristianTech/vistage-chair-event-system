@@ -3,7 +3,15 @@
 import { useState } from 'react';
 import type { PublicFormData } from '@/lib/public-form';
 
-export default function RsvpFormClient({ token, data }: { token: string; data: PublicFormData }) {
+export default function RsvpFormClient({
+  token,
+  data,
+  accentColor,
+}: {
+  token: string;
+  data: PublicFormData;
+  accentColor?: string | null;
+}) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [name, setName] = useState(data.prefill ? `${data.prefill.firstName} ${data.prefill.lastName}` : '');
   const [email, setEmail] = useState(data.prefill?.email ?? '');
@@ -83,7 +91,12 @@ export default function RsvpFormClient({ token, data }: { token: string; data: P
 
       {error ? <p className="text-sm text-danger bg-danger-bg rounded px-3 py-2">{error}</p> : null}
 
-      <button type="submit" className="btn-primary w-full justify-center" disabled={submitting}>
+      <button
+        type="submit"
+        className="btn-primary w-full justify-center"
+        style={accentColor ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}
+        disabled={submitting}
+      >
         {submitting ? 'Sending…' : 'Submit response'}
       </button>
     </form>

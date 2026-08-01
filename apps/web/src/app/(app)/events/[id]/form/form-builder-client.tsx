@@ -31,12 +31,20 @@ interface FormQuestion {
   sort_order: number;
 }
 
+interface FormTheme {
+  logoUrl?: string;
+  headerImageUrl?: string;
+  primaryColor?: string;
+  accentColor?: string;
+}
+
 interface FormRow {
   id: string;
   public_token: string;
   intro_text: string | null;
   confirmation_text: string | null;
   is_published: boolean;
+  theme: FormTheme | null;
 }
 
 const QUESTION_TEMPLATES: { type: string; label: string; description: string }[] = [
@@ -69,6 +77,10 @@ export default function FormBuilderClient({
   }, [questions]);
   const [introText, setIntroText] = useState(form.intro_text ?? '');
   const [confirmationText, setConfirmationText] = useState(form.confirmation_text ?? '');
+  const [themeLogoUrl, setThemeLogoUrl] = useState(form.theme?.logoUrl ?? '');
+  const [themeHeaderImageUrl, setThemeHeaderImageUrl] = useState(form.theme?.headerImageUrl ?? '');
+  const [themePrimaryColor, setThemePrimaryColor] = useState(form.theme?.primaryColor ?? '');
+  const [themeAccentColor, setThemeAccentColor] = useState(form.theme?.accentColor ?? '');
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +137,25 @@ export default function FormBuilderClient({
     });
   }
 
+  function saveTheme() {
+    setError(null);
+    startTransition(async () => {
+      const result = await updateFormMetaAction(form.id, {
+        theme: {
+          logoUrl: themeLogoUrl || undefined,
+          headerImageUrl: themeHeaderImageUrl || undefined,
+          primaryColor: themePrimaryColor || undefined,
+          accentColor: themeAccentColor || undefined,
+        },
+      });
+      if (!result.ok) {
+        setError(result.error || 'Could not save branding.');
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {error ? (
@@ -170,6 +201,50 @@ export default function FormBuilderClient({
           </div>
           <button className="btn-secondary" onClick={saveMeta} disabled={isPending}>
             Save
+          </button>
+        </div>
+
+        <div className="card p-5">
+          <h3>Branding for this event</h3>
+          <p className="text-navy-500 text-sm mb-4">
+            Leave any field blank to use your default branding from Settings. Set one here only to override it for
+            this event specifically — a different logo for a co-branded event, for example.
+          </p>
+          <div className="mb-3">
+            <label className="field-label">Logo URL</label>
+            <input className="input" value={themeLogoUrl} onChange={(e) => setThemeLogoUrl(e.target.value)} placeholder="https://…" />
+          </div>
+          <div className="mb-3">
+            <label className="field-label">Header image URL</label>
+            <input
+              className="input"
+              value={themeHeaderImageUrl}
+              onChange={(e) => setThemeHeaderImageUrl(e.target.value)}
+              placeholder="https://…"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="field-label">Primary color</label>
+              <input
+                className="input h-10"
+                type="color"
+                value={themePrimaryColor || '#0f1f3d'}
+                onChange={(e) => setThemePrimaryColor(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="field-label">Accent color</label>
+              <input
+                className="input h-10"
+                type="color"
+                value={themeAccentColor || '#b08d57'}
+                onChange={(e) => setThemeAccentColor(e.target.value)}
+              />
+            </div>
+          </div>
+          <button className="btn-secondary" onClick={saveTheme} disabled={isPending}>
+            Save branding
           </button>
         </div>
       </div>

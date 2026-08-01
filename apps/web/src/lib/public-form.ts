@@ -11,6 +11,13 @@ import type { Json } from '@/lib/database.types';
  * *published* form, so an unpublished or mistyped link reveals nothing.
  */
 
+export interface FormBranding {
+  logoUrl: string | null;
+  headerImageUrl: string | null;
+  primaryColor: string | null;
+  accentColor: string | null;
+}
+
 export interface PublicFormData {
   formId: string;
   tenantId: string;
@@ -18,6 +25,7 @@ export interface PublicFormData {
   introText: string | null;
   confirmationText: string | null;
   theme: Record<string, unknown> | null;
+  branding: FormBranding;
   questions: Array<{
     id: string;
     question_type: string;
@@ -45,6 +53,24 @@ export async function getPublicFormData(formToken: string, invitationToken?: str
 
   const { data: event } = await supabase.from('events').select('*').eq('id', form.event_id).maybeSingle();
   if (!event) return null;
+
+  const { data: tenantSettings } = await supabase
+    .from('tenant_settings')
+    .select('branding')
+    .eq('tenant_id', form.tenant_id)
+    .maybeSingle();
+
+  // The event's own theme override wins field-by-field over the tenant's
+  // default branding — set a logo tenant-wide once, or override it (or the
+  // colors) for just this one event.
+  const tenantBranding = (tenantSettings?.branding as Record<string, unknown>) ?? {};
+  const eventTheme = (form.theme as Record<string, unknown>) ?? {};
+  const branding: FormBranding = {
+    logoUrl: (eventTheme.logoUrl as string) ?? (tenantBranding.logoUrl as string) ?? null,
+    headerImageUrl: (eventTheme.headerImageUrl as string) ?? (tenantBranding.headerImageUrl as string) ?? null,
+    primaryColor: (eventTheme.primaryColor as string) ?? (tenantBranding.primaryColor as string) ?? null,
+    accentColor: (eventTheme.accentColor as string) ?? (tenantBranding.accentColor as string) ?? null,
+  };
 
   const { data: questions } = await supabase
     .from('form_questions')
@@ -87,6 +113,7 @@ export async function getPublicFormData(formToken: string, invitationToken?: str
     introText: form.intro_text,
     confirmationText: form.confirmation_text,
     theme: (form.theme as Record<string, unknown>) ?? null,
+    branding,
     questions: questions ?? [],
     event: {
       publicTitle: event.public_title,
