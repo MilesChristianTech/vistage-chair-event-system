@@ -1,11 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Part 2.5: "Anyone who reaches the URL without credentials sees only the
-// sign-in screen and can go no further." This middleware is the gate — it
-// runs before every request except static assets, the public RSVP form, and
-// its supporting public API routes.
-const PUBLIC_PATHS = ['/sign-in', '/auth', '/r', '/api/public'];
+// The gate — runs before every request except static assets, the marketing
+// landing page and legal pages, the public RSVP form, and their supporting
+// public API routes. Everything else requires a signed-in session.
+const PUBLIC_PATHS = ['/', '/sign-in', '/auth', '/r', '/api/public', '/terms', '/privacy'];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -53,7 +52,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  if (user && pathname === '/sign-in') {
+  if (user && (pathname === '/sign-in' || pathname === '/')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

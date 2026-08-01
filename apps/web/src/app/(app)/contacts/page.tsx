@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Download } from 'lucide-react';
 import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
@@ -37,6 +38,12 @@ export default async function ContactsPage({
   const { data: people } = await query.limit(200);
   const typeLabel = new Map((relationshipTypes ?? []).map((t) => [t.id, t.label]));
 
+  const exportParams = new URLSearchParams();
+  if (q) exportParams.set('q', q);
+  if (typeFilter) exportParams.set('type', typeFilter);
+  if (statusFilter) exportParams.set('status', statusFilter);
+  const exportHref = `/api/contacts/export${exportParams.toString() ? `?${exportParams}` : ''}`;
+
   return (
     <>
       <AppPageHeader
@@ -44,6 +51,10 @@ export default async function ContactsPage({
         description="The people in your world — reused across every event."
         actions={
           <>
+            <a href={exportHref} className="btn-secondary">
+              <Download className="h-4 w-4" strokeWidth={1.75} />
+              Export CSV
+            </a>
             <Link href="/contacts/import" className="btn-secondary">
               Import contacts
             </Link>
