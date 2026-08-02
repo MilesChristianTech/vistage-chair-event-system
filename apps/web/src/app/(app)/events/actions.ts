@@ -5,8 +5,6 @@ import { redirect } from 'next/navigation';
 import { DateTime } from 'luxon';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
-import { getRecipientCandidates, createSendJobCore } from '@/lib/send-job-core';
-import { getPaceRecommendations } from '@/lib/pacing';
 import type { Database } from '@/lib/database.types';
 
 type EventStatus = Database['public']['Tables']['events']['Row']['status'];
@@ -100,45 +98,9 @@ export async function updateEventAction(eventId: string, _prevState: ActionResul
 }
 
 export async function updateEventStatusAction(eventId: string, status: string): Promise<ActionResult> {
-  const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
   const { error } = await supabase.from('events').update({ status: status as EventStatus }).eq('id', eventId);
   if (error) return { ok: false, error: error.message };
-
-  // Unlike every other suite message (manual, or date-triggered by the
-  // auto-schedule cron), cancellation has a real, immediate trigger already
-  // available: the Host marking the event cancelled. Fires once — if a job
-  // already exists (any status) for this event, it's not re-triggered.
-  if (status === 'cancelled') {
-    const { data: message } = await supabase
-      .from('messages')
-      .select('is_approved')
-      .eq('event_id', eventId)
-      .eq('message_type', 'cancellation')
-      .maybeSingle();
-
-    const { data: alreadyExists } = await supabase
-      .from('send_jobs')
-      .select('id')
-      .eq('event_id', eventId)
-      .eq('job_type', 'cancellation')
-      .maybeSingle();
-
-    if (message?.is_approved && !alreadyExists) {
-      const candidates = await getRecipientCandidates(supabase, eventId, 'cancellation');
-      if (candidates.length > 0) {
-        const pace = getPaceRecommendations(candidates.length).find((r) => r.isRecommended)?.profile ?? 'fastest';
-        await createSendJobCore(supabase, {
-          tenantId: appUser.tenant_id,
-          createdBy: appUser.id,
-          eventId,
-          jobType: 'cancellation',
-          paceProfile: pace,
-        });
-      }
-    }
-  }
-
   revalidatePath(`/events/${eventId}`, 'layout');
   return { ok: true };
 }

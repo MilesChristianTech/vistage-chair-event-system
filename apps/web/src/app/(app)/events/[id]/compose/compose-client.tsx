@@ -157,6 +157,16 @@ export default function ComposeClient({
     });
   }
 
+  // These three are the only message types that actually do something
+  // automatically once approved — every other type still requires a
+  // deliberate manual Send. Worth telling the Host plainly in the moment
+  // rather than leaving them to discover (or not discover) it later.
+  const AUTO_BEHAVIOR_MESSAGE: Record<string, string> = {
+    rsvp_confirmation: 'Approved — this will now send automatically the moment someone RSVPs yes.',
+    form_intro: 'Approved — this is now live at the top of your RSVP form.',
+    form_confirmation: 'Approved — this is now live as your form’s confirmation screen.',
+  };
+
   function toggleApprove() {
     if (!selected) return;
     const willApprove = !selected.is_approved;
@@ -167,7 +177,8 @@ export default function ComposeClient({
         setError(result.error || 'Could not update approval status.');
         return;
       }
-      toast.success(willApprove ? 'Approved.' : 'Approval removed — back to draft.');
+      const autoMessage = willApprove ? AUTO_BEHAVIOR_MESSAGE[selected.message_type] : undefined;
+      toast.success(autoMessage ?? (willApprove ? 'Approved.' : 'Approval removed — back to draft.'));
       router.refresh();
     });
   }
