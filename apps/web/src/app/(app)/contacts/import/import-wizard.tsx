@@ -9,18 +9,19 @@ import {
   PERSON_FIELD_LABELS,
   type MappedPersonRow,
   type ParsedSheet,
-  type PersonField,
+  type ColumnTarget,
 } from '@/lib/import';
-import { checkDuplicateEmailsAction, commitImportAction, type ImportSummary } from '../actions';
+import { checkDuplicateEmailsAction, commitImportAction, createCustomFieldDefinitionAction, type ImportSummary, type CustomFieldDefinition } from '../actions';
 
 type Step = 'drop' | 'mapping' | 'preview' | 'dedupe' | 'done';
 
-export default function ImportWizard() {
+export default function ImportWizard({ customFieldDefinitions }: { customFieldDefinitions: CustomFieldDefinition[] }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>('drop');
   const [fileName, setFileName] = useState<string | null>(null);
   const [sheet, setSheet] = useState<ParsedSheet | null>(null);
-  const [mapping, setMapping] = useState<Record<number, PersonField>>({});
+  const [mapping, setMapping] = useState<Record<number, ColumnTarget>>({});
+  const [fields, setFields] = useState(customFieldDefinitions);
   const [duplicates, setDuplicates] = useState<{ normalizedEmail: string; existingName: string }[]>([]);
   const [dedupeChoice, setDedupeChoice] = useState<'update' | 'skip' | 'keep_both'>('update');
   const [isBusy, setIsBusy] = useState(false);
@@ -95,7 +96,9 @@ export default function ImportWizard() {
         <MappingStep
           sheet={sheet}
           mapping={mapping}
-          onChangeMapping={(idx, field) => setMapping((m) => ({ ...m, [idx]: field }))}
+          fields={fields}
+          onChangeMapping={(idx, target) => setMapping((m) => ({ ...m, [idx]: target }))}
+          onAddField={(field) => setFields((current) => (current.some((f) => f.field_key === field.field_key) ? current : [...current, field]))}
           onBack={() => setStep('drop')}
           onNext={() => setStep('preview')}
         />
@@ -193,16 +196,22 @@ function DropStep({ onFile, error }: { onFile: (file: File) => void; error: stri
   );
 }
 
+const ADD_NEW_FIELD = '__add_new__';
+
 function MappingStep({
   sheet,
   mapping,
+  fields,
   onChangeMapping,
+  onAddField,
   onBack,
   onNext,
 }: {
   sheet: ParsedSheet;
-  mapping: Record<number, PersonField>;
-  onChangeMapping: (index: number, field: PersonField) => void;
+  mapping: Record<number, ColumnTarget>;
+  fields: CustomFieldDefinition[];
+  onChangeMapping: (index: number, target: ColumnTarget) => void;
+  onAddField: (field: CustomFieldDefinition) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -210,7 +219,8 @@ function MappingStep({
     <div className="card p-5">
       <h3>Review the column mapping</h3>
       <p className="text-navy-500 text-sm mb-4">
-        We’ve made our best guess at what each column is. Change anything that’s not right.
+        We’ve made our best guess at what each column is. Change anything that’s not right — any column can also
+        become its own custom field if it doesn’t fit a standard one.
       </p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -223,23 +233,16 @@ function MappingStep({
           </thead>
           <tbody className="divide-y divide-navy-100">
             {sheet.headers.map((header, idx) => (
-              <tr key={idx}>
-                <td className="px-3 py-2 font-medium text-navy-800">{header || `Column ${idx + 1}`}</td>
-                <td className="px-3 py-2 text-navy-500">{sheet.rows[0]?.[idx] || '—'}</td>
-                <td className="px-3 py-2">
-                  <select
-                    className="input"
-                    value={mapping[idx] ?? 'ignore'}
-                    onChange={(e) => onChangeMapping(idx, e.target.value as PersonField)}
-                  >
-                    {Object.entries(PERSON_FIELD_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
+              <MappingRow
+                key={idx}
+                idx={idx}
+                header={header}
+                sampleValue={sheet.rows[0]?.[idx]}
+                target={mapping[idx] ?? 'ignore'}
+                fields={fields}
+                onChangeMapping={onChangeMapping}
+                onAddField={onAddField}
+              />
             ))}
           </tbody>
         </table>
@@ -253,6 +256,100 @@ function MappingStep({
         </button>
       </div>
     </div>
+  );
+}
+
+function MappingRow({
+  idx,
+  header,
+  sampleValue,
+  target,
+  fields,
+  onChangeMapping,
+  onAddField,
+}: {
+  idx: number;
+  header: string;
+  sampleValue: string | undefined;
+  target: ColumnTarget;
+  fields: CustomFieldDefinition[];
+  onChangeMapping: (index: number, target: ColumnTarget) => void;
+  onAddField: (field: CustomFieldDefinition) => void;
+}) {
+  const [addingField, setAddingField] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  async function confirmNewField() {
+    if (!newLabel.trim()) return;
+    setIsCreating(true);
+    setCreateError(null);
+    const result = await createCustomFieldDefinitionAction(newLabel);
+    setIsCreating(false);
+    if (!result.ok || !result.field) {
+      setCreateError(result.error || 'Could not create that field.');
+      return;
+    }
+    onAddField(result.field);
+    onChangeMapping(idx, `custom:${result.field.field_key}`);
+    setAddingField(false);
+    setNewLabel('');
+  }
+
+  return (
+    <tr>
+      <td className="px-3 py-2 font-medium text-navy-800">{header || `Column ${idx + 1}`}</td>
+      <td className="px-3 py-2 text-navy-500">{sampleValue || '—'}</td>
+      <td className="px-3 py-2">
+        {addingField ? (
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus
+              className="input"
+              placeholder="Field name, e.g. Prospect status"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+            />
+            <button type="button" className="btn-secondary shrink-0 text-xs" disabled={isCreating || !newLabel.trim()} onClick={confirmNewField}>
+              {isCreating ? 'Adding…' : 'Add'}
+            </button>
+            <button type="button" className="btn-ghost shrink-0 text-xs" onClick={() => setAddingField(false)}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <select
+            className="input"
+            value={target}
+            onChange={(e) => {
+              if (e.target.value === ADD_NEW_FIELD) {
+                setAddingField(true);
+                return;
+              }
+              onChangeMapping(idx, e.target.value as ColumnTarget);
+            }}
+          >
+            {Object.entries(PERSON_FIELD_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+            {fields.length > 0 ? (
+              <optgroup label="Custom fields">
+                {fields.map((f) => (
+                  <option key={f.field_key} value={`custom:${f.field_key}`}>
+                    {f.label}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            <option value={ADD_NEW_FIELD}>+ Add new custom field…</option>
+          </select>
+        )}
+        {createError ? <p className="text-xs text-danger mt-1">{createError}</p> : null}
+      </td>
+    </tr>
   );
 }
 

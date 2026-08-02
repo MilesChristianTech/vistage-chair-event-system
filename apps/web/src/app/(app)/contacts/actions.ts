@@ -5,10 +5,72 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
 import type { MappedPersonRow } from '@/lib/import';
+import type { Json } from '@/lib/database.types';
 
 export interface ActionResult {
   ok: boolean;
   error?: string;
+}
+
+function slugifyFieldKey(label: string): string {
+  const base = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return base || 'field';
+}
+
+const CUSTOM_FIELD_PREFIX = 'custom_field__';
+
+function customFieldsFromFormData(formData: FormData): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith(CUSTOM_FIELD_PREFIX)) {
+      values[key.slice(CUSTOM_FIELD_PREFIX.length)] = String(value).trim();
+    }
+  }
+  return values;
+}
+
+export interface CustomFieldDefinition {
+  id: string;
+  field_key: string;
+  label: string;
+}
+
+// Part request: "unlimited import columns" / a basic Excel-CRM classifier
+// system — a Host can define their own field on the fly (from the contact
+// form or the import wizard) rather than being limited to the fixed
+// columns. Reuses an existing definition with the same key if the label
+// normalizes to one already in use.
+export async function createCustomFieldDefinitionAction(label: string): Promise<ActionResult & { field?: CustomFieldDefinition }> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const trimmedLabel = label.trim();
+  if (!trimmedLabel) return { ok: false, error: 'Give the field a name.' };
+
+  const fieldKey = slugifyFieldKey(trimmedLabel);
+
+  const { data: existing } = await supabase
+    .from('custom_field_definitions')
+    .select('id, field_key, label')
+    .eq('tenant_id', appUser.tenant_id)
+    .eq('field_key', fieldKey)
+    .maybeSingle();
+
+  if (existing) return { ok: true, field: existing };
+
+  const { data: created, error } = await supabase
+    .from('custom_field_definitions')
+    .insert({ tenant_id: appUser.tenant_id, field_key: fieldKey, label: trimmedLabel })
+    .select('id, field_key, label')
+    .single();
+
+  if (error || !created) return { ok: false, error: error?.message ?? 'Could not create that field.' };
+  revalidatePath('/contacts');
+  return { ok: true, field: created };
 }
 
 // Part 4.4 / 6.1: editing a person is always free, immediate, and has no
@@ -37,6 +99,7 @@ export async function createPersonAction(formData: FormData): Promise<ActionResu
       | 'phone_only'
       | 'do_not_contact'),
     summary_note: String(formData.get('summary_note') || '').trim() || null,
+    custom_fields: customFieldsFromFormData(formData) as unknown as Json,
   });
 
   if (error) return { ok: false, error: error.message };
@@ -69,6 +132,7 @@ export async function updatePersonAction(personId: string, formData: FormData): 
         | 'phone_only'
         | 'do_not_contact'),
       summary_note: String(formData.get('summary_note') || '').trim() || null,
+      custom_fields: customFieldsFromFormData(formData) as unknown as Json,
     })
     .eq('id', personId);
 
@@ -144,6 +208,15 @@ export async function addPersonNoteAction(personId: string, body: string): Promi
 
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/contacts/${personId}`);
+  return { ok: true };
+}
+
+export async function deletePersonNoteAction(noteId: string, personId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from('notes').delete().eq('id', noteId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/contacts/${personId}`);
+  revalidatePath('/contacts');
   return { ok: true };
 }
 
@@ -273,6 +346,7 @@ export async function commitImportAction(params: {
       title: row.title,
       relationship_type_id: relationshipTypeId,
       summary_note: row.summary_note,
+      custom_fields: row.custom_fields as unknown as Json,
     };
 
     if (dup && dedupeChoice === 'skip') {
@@ -281,7 +355,22 @@ export async function commitImportAction(params: {
     }
 
     if (dup && dedupeChoice === 'update') {
-      const { error } = await supabase.from('people').update(payload).eq('id', dup.existingPersonId);
+      // Merge rather than overwrite custom_fields — this import row only
+      // carries whatever columns were mapped this time, and shouldn't wipe
+      // out other custom field values already on the existing record.
+      let updatePayload = payload;
+      if (Object.keys(row.custom_fields).length > 0) {
+        const { data: existingPerson } = await supabase
+          .from('people')
+          .select('custom_fields')
+          .eq('id', dup.existingPersonId)
+          .single();
+        updatePayload = {
+          ...payload,
+          custom_fields: { ...((existingPerson?.custom_fields as Record<string, string>) ?? {}), ...row.custom_fields } as unknown as Json,
+        };
+      }
+      const { error } = await supabase.from('people').update(updatePayload).eq('id', dup.existingPersonId);
       if (error) flagged++;
       else updated++;
       continue;

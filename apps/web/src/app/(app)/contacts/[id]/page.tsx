@@ -17,8 +17,9 @@ export default async function PersonProfilePage({ params }: { params: { id: stri
   const { data: person } = await supabase.from('people').select('*').eq('id', params.id).single();
   if (!person) notFound();
 
-  const [{ data: relationshipTypes }, { data: notes }, { data: invitations }] = await Promise.all([
+  const [{ data: relationshipTypes }, { data: customFieldDefinitions }, { data: notes }, { data: invitations }] = await Promise.all([
     supabase.from('relationship_types').select('id, label').eq('tenant_id', appUser.tenant_id).order('sort_order'),
+    supabase.from('custom_field_definitions').select('id, field_key, label').eq('tenant_id', appUser.tenant_id).order('sort_order'),
     supabase
       .from('notes')
       .select('id, body, created_at')
@@ -82,9 +83,10 @@ export default async function PersonProfilePage({ params }: { params: { id: stri
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="space-y-6">
             <ProfileEditor
-              person={person}
+              person={{ ...person, custom_fields: (person.custom_fields as Record<string, string>) ?? {} }}
               relationshipTypeLabel={relationshipTypeLabel}
               relationshipTypes={relationshipTypes ?? []}
+              customFieldDefinitions={customFieldDefinitions ?? []}
             />
             <NotesPanel personId={person.id} notes={notes ?? []} />
           </div>

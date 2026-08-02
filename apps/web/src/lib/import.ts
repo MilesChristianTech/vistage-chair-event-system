@@ -16,6 +16,20 @@ export type PersonField =
   | 'notes'
   | 'ignore';
 
+// A column can map to one of the fixed fields above, or to a Host-defined
+// custom field (Part request: "unlimited import columns" / a basic
+// Excel-CRM classifier system) — encoded as `custom:<field_key>` so the
+// mapping stays a single value per column without a second parallel map.
+export type ColumnTarget = PersonField | `custom:${string}`;
+
+export function isCustomFieldTarget(target: ColumnTarget): target is `custom:${string}` {
+  return target.startsWith('custom:');
+}
+
+export function customFieldKeyFromTarget(target: ColumnTarget): string {
+  return target.slice('custom:'.length);
+}
+
 export const PERSON_FIELD_LABELS: Record<PersonField, string> = {
   first_name: 'First Name',
   last_name: 'Last Name',
@@ -85,17 +99,26 @@ export interface MappedPersonRow {
   title: string | null;
   relationship_type_label: string | null;
   summary_note: string | null;
+  custom_fields: Record<string, string>;
   email_valid: boolean;
   source_row_index: number;
 }
 
-export function applyMapping(sheet: ParsedSheet, mapping: Record<number, PersonField>): MappedPersonRow[] {
+export function applyMapping(sheet: ParsedSheet, mapping: Record<number, ColumnTarget>): MappedPersonRow[] {
   return sheet.rows.map((row, rowIndex) => {
     const get = (field: PersonField): string => {
       const colIndex = Object.entries(mapping).find(([, f]) => f === field)?.[0];
       if (colIndex === undefined) return '';
       return (row[Number(colIndex)] ?? '').trim();
     };
+
+    const customFields: Record<string, string> = {};
+    for (const [colIndex, target] of Object.entries(mapping)) {
+      if (isCustomFieldTarget(target)) {
+        const value = (row[Number(colIndex)] ?? '').trim();
+        if (value) customFields[customFieldKeyFromTarget(target)] = value;
+      }
+    }
 
     const email = get('email');
 
@@ -108,6 +131,7 @@ export function applyMapping(sheet: ParsedSheet, mapping: Record<number, PersonF
       title: get('title') || null,
       relationship_type_label: get('relationship_type') || null,
       summary_note: get('notes') || null,
+      custom_fields: customFields,
       email_valid: email ? isValidEmail(email) : true,
       source_row_index: rowIndex,
     };

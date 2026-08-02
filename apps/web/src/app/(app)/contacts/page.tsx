@@ -4,6 +4,7 @@ import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
 import Avatar from '@/components/avatar';
+import QuickNoteButton from './quick-note-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,17 +26,17 @@ export default async function ContactsPage({
     .eq('tenant_id', appUser.tenant_id)
     .order('sort_order');
 
-  let query = supabase
-    .from('people')
-    .select('id, first_name, last_name, preferred_name, email, company, title, contact_preference, is_active, relationship_type_id')
-    .order('last_name', { ascending: true });
-
-  if (statusFilter === 'active') query = query.eq('is_active', true);
-  if (statusFilter === 'inactive') query = query.eq('is_active', false);
-  if (typeFilter) query = query.eq('relationship_type_id', typeFilter);
-  if (q) query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,company.ilike.%${q}%,email.ilike.%${q}%`);
-
-  const { data: people } = await query.limit(200);
+  // search_people (Part: "search by anything") matches name, company,
+  // title, email, relationship type label, the summary note, and any
+  // custom field value in one place — shared with the add-invitees search.
+  const { data: people } = await supabase
+    .rpc('search_people', {
+      p_tenant_id: appUser.tenant_id,
+      p_query: q || null,
+      p_status: statusFilter,
+      p_relationship_type_id: typeFilter || null,
+    })
+    .limit(200);
   const typeLabel = new Map((relationshipTypes ?? []).map((t) => [t.id, t.label]));
 
   const exportParams = new URLSearchParams();
@@ -69,7 +70,7 @@ export default async function ContactsPage({
           <input
             name="q"
             defaultValue={q}
-            placeholder="Search by name, company, or email"
+            placeholder="Search by name, company, title, type, notes, or any custom field"
             className="input max-w-sm"
           />
           <select name="type" defaultValue={typeFilter} className="input max-w-[220px]">
@@ -114,6 +115,7 @@ export default async function ContactsPage({
                   <th className="text-left px-4 py-2.5 font-medium">Email</th>
                   <th className="text-left px-4 py-2.5 font-medium">Type</th>
                   <th className="text-left px-4 py-2.5 font-medium">Contact pref.</th>
+                  <th className="text-left px-4 py-2.5 font-medium">Quick note</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-navy-100">
@@ -149,6 +151,9 @@ export default async function ContactsPage({
                     </td>
                     <td className="px-4 py-2.5">
                       <ContactPrefBadge pref={p.contact_preference} />
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <QuickNoteButton personId={p.id} />
                     </td>
                   </tr>
                 ))}

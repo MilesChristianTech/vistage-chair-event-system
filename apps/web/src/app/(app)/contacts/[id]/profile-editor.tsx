@@ -2,16 +2,18 @@
 
 import { useState } from 'react';
 import PersonForm, { type PersonFormValues } from '../person-form';
-import { updatePersonFormAction } from '../actions';
+import { updatePersonFormAction, type CustomFieldDefinition } from '../actions';
 
 export default function ProfileEditor({
   person,
   relationshipTypeLabel,
   relationshipTypes,
+  customFieldDefinitions,
 }: {
   person: PersonFormValues & { id: string };
   relationshipTypeLabel: string | null;
   relationshipTypes: { id: string; label: string }[];
+  customFieldDefinitions: CustomFieldDefinition[];
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -27,6 +29,7 @@ export default function ProfileEditor({
         <PersonForm
           action={updatePersonFormAction.bind(null, person.id)}
           relationshipTypes={relationshipTypes}
+          customFieldDefinitions={customFieldDefinitions}
           initial={person}
           submitLabel="Save changes"
           onSuccess={() => setEditing(false)}
@@ -60,6 +63,9 @@ export default function ProfileEditor({
           }
         />
         <Row label="Note" value={person.summary_note} />
+        {customFieldDefinitions.map((f) => (
+          <Row key={f.field_key} label={f.label} value={person.custom_fields?.[f.field_key]} />
+        ))}
       </dl>
     </div>
   );

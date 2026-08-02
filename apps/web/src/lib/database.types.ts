@@ -83,6 +83,7 @@ export interface Database {
           contact_preference: 'email_ok' | 'phone_only' | 'do_not_contact';
           is_active: boolean;
           summary_note: string | null;
+          custom_fields: Json;
           created_at: string;
           updated_at: string;
         };
@@ -92,6 +93,23 @@ export interface Database {
           last_name: string;
         };
         Update: Partial<Database['public']['Tables']['people']['Row']>;
+      Relationships: [];
+      };
+      custom_field_definitions: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          field_key: string;
+          label: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['custom_field_definitions']['Row']> & {
+          tenant_id: string;
+          field_key: string;
+          label: string;
+        };
+        Update: Partial<Database['public']['Tables']['custom_field_definitions']['Row']>;
       Relationships: [];
       };
       events: {
@@ -461,6 +479,15 @@ export interface Database {
       current_tenant_id: {
         Args: Record<string, never>;
         Returns: string;
+      };
+      search_people: {
+        Args: {
+          p_tenant_id: string;
+          p_query?: string | null;
+          p_status?: string;
+          p_relationship_type_id?: string | null;
+        };
+        Returns: Database['public']['Tables']['people']['Row'][];
       };
     };
     Enums: Record<string, never>;

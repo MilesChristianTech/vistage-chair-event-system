@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
-import type { ActionResult } from './actions';
+import { createCustomFieldDefinitionAction, type ActionResult, type CustomFieldDefinition } from './actions';
 import { useSuccessToast } from '@/lib/use-success-toast';
 
 type RelationshipType = { id: string; label: string };
@@ -18,6 +18,7 @@ export interface PersonFormValues {
   relationship_type_id?: string | null;
   contact_preference?: string | null;
   summary_note?: string | null;
+  custom_fields?: Record<string, string> | null;
 }
 
 function SubmitButton({ label }: { label: string }) {
@@ -32,18 +33,39 @@ function SubmitButton({ label }: { label: string }) {
 export default function PersonForm({
   action,
   relationshipTypes,
+  customFieldDefinitions,
   initial,
   submitLabel,
   onSuccess,
 }: {
   action: (state: ActionResult, formData: FormData) => Promise<ActionResult>;
   relationshipTypes: RelationshipType[];
+  customFieldDefinitions: CustomFieldDefinition[];
   initial?: PersonFormValues;
   submitLabel: string;
   onSuccess?: () => void;
 }) {
   const [state, formAction] = useFormState(action, { ok: true });
   useSuccessToast(state, 'Saved.');
+
+  const [fields, setFields] = useState(customFieldDefinitions);
+  const [newFieldLabel, setNewFieldLabel] = useState('');
+  const [addingField, setAddingField] = useState(false);
+  const [addFieldError, setAddFieldError] = useState<string | null>(null);
+
+  async function addField() {
+    if (!newFieldLabel.trim()) return;
+    setAddingField(true);
+    setAddFieldError(null);
+    const result = await createCustomFieldDefinitionAction(newFieldLabel);
+    setAddingField(false);
+    if (!result.ok || !result.field) {
+      setAddFieldError(result.error || 'Could not add that field.');
+      return;
+    }
+    setFields((current) => (current.some((f) => f.field_key === result.field!.field_key) ? current : [...current, result.field!]));
+    setNewFieldLabel('');
+  }
 
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -159,6 +181,44 @@ export default function PersonForm({
           className="input"
           placeholder="Durable relationship context, e.g. “prefers early-morning events”"
         />
+      </div>
+
+      {fields.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {fields.map((f) => (
+            <div key={f.field_key}>
+              <label className="field-label" htmlFor={`custom_field__${f.field_key}`}>
+                {f.label}
+              </label>
+              <input
+                id={`custom_field__${f.field_key}`}
+                name={`custom_field__${f.field_key}`}
+                defaultValue={initial?.custom_fields?.[f.field_key] ?? ''}
+                className="input"
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="border-t border-navy-100 pt-4">
+        <label className="field-label">Add a custom field</label>
+        <p className="field-hint mb-2">
+          Any classifier you want to track — “Prospect status”, “Chapter”, anything — becomes available on every
+          contact going forward.
+        </p>
+        <div className="flex gap-2">
+          <input
+            className="input max-w-xs"
+            placeholder="e.g. Prospect status"
+            value={newFieldLabel}
+            onChange={(e) => setNewFieldLabel(e.target.value)}
+          />
+          <button type="button" className="btn-secondary shrink-0" disabled={addingField || !newFieldLabel.trim()} onClick={addField}>
+            {addingField ? 'Adding…' : 'Add field'}
+          </button>
+        </div>
+        {addFieldError ? <p className="text-sm text-danger mt-2">{addFieldError}</p> : null}
       </div>
 
       {!state.ok && state.error ? (

@@ -224,27 +224,28 @@ export async function searchPeopleForInviteAction(eventId: string, query: string
   const supabase = await createClient();
 
   const { data: existing } = await supabase.from('invitations').select('person_id').eq('event_id', eventId);
-  const existingIds = (existing ?? []).map((i) => i.person_id);
+  const existingIds = new Set((existing ?? []).map((i) => i.person_id));
 
-  let dbQuery = supabase
-    .from('people')
-    .select('id, first_name, last_name, email, company, contact_preference')
-    .eq('tenant_id', appUser.tenant_id)
-    .eq('is_active', true)
-    .order('last_name')
-    .limit(25);
+  // search_people matches name, company, title, email, relationship type
+  // label, the summary note, and any custom field value — shared with the
+  // Contacts list search, so "search by anything" is right in one place.
+  const { data } = await supabase.rpc('search_people', {
+    p_tenant_id: appUser.tenant_id,
+    p_query: query.trim() || null,
+    p_status: 'active',
+  });
 
-  if (existingIds.length > 0) {
-    dbQuery = dbQuery.not('id', 'in', `(${existingIds.join(',')})`);
-  }
-
-  const trimmed = query.trim();
-  if (trimmed) {
-    dbQuery = dbQuery.or(`first_name.ilike.%${trimmed}%,last_name.ilike.%${trimmed}%,company.ilike.%${trimmed}%,email.ilike.%${trimmed}%`);
-  }
-
-  const { data } = await dbQuery;
-  return data ?? [];
+  return (data ?? [])
+    .filter((p) => !existingIds.has(p.id))
+    .slice(0, 25)
+    .map((p) => ({
+      id: p.id,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      email: p.email,
+      company: p.company,
+      contact_preference: p.contact_preference,
+    }));
 }
 
 export interface AddInviteesResult extends ActionResult {
