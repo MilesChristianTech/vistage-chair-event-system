@@ -2,26 +2,22 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { requireCurrentUser, getTenantSettings, getMailboxConnection } from '@/lib/tenant';
-import { getPaceSpanMs, buildSendSchedule, type PaceProfile } from '@/lib/pacing';
-import { distributeVariants } from '@/lib/variant-distribution';
-import { resolveGreetingName, resolveMergeFields, plainTextToHtml, appendCalendarLinkIfRelevant } from '@/lib/merge-fields';
+import { requireCurrentUser, getMailboxConnection } from '@/lib/tenant';
+import type { PaceProfile } from '@/lib/pacing';
+import {
+  getRecipientCandidates,
+  getActiveJobForType,
+  createSendJobCore,
+  type SendJobType,
+  type CreateSendJobResult,
+} from '@/lib/send-job-core';
 
 export interface ActionResult {
   ok: boolean;
   error?: string;
 }
 
-export type SendJobType =
-  | 'invitation'
-  | 'reminder'
-  | 'priority_follow_up'
-  | 'rsvp_confirmation'
-  | 'final_details'
-  | 'waitlist'
-  | 'cancellation'
-  | 'thank_you'
-  | 'post_event_follow_up';
+export type { SendJobType };
 
 export interface PreflightStatus {
   mailboxReady: boolean;
@@ -35,22 +31,6 @@ export interface PreflightStatus {
   blockers: string[];
 }
 
-/** Whether a job of this type for this event is still running or paused —
- * nothing previously stopped a Host from starting a second one on top of it,
- * which would independently re-target the same not-yet-sent recipients and
- * risk sending the same message to the same person twice. */
-async function getActiveJobForType(eventId: string, jobType: SendJobType) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('send_jobs')
-    .select('id, status')
-    .eq('event_id', eventId)
-    .eq('job_type', jobType)
-    .in('status', ['running', 'paused'])
-    .maybeSingle();
-  return data;
-}
-
 /** Part 7.7: "Before a send can start, the app verifies..." */
 export async function getPreflightStatusAction(eventId: string, jobType: SendJobType): Promise<PreflightStatus> {
   const { appUser } = await requireCurrentUser();
@@ -62,8 +42,8 @@ export async function getPreflightStatusAction(eventId: string, jobType: SendJob
     supabase.from('events').select('*').eq('id', eventId).single(),
     supabase.from('messages').select('id, is_approved, body').eq('event_id', eventId).eq('message_type', jobType).maybeSingle(),
     supabase.from('forms').select('is_published').eq('event_id', eventId).single(),
-    getRecipientCandidates(eventId, jobType),
-    getActiveJobForType(eventId, jobType),
+    getRecipientCandidates(supabase, eventId, jobType),
+    getActiveJobForType(supabase, eventId, jobType),
   ]);
 
   const isDemo = tenant?.is_demo ?? false;
@@ -111,44 +91,7 @@ export async function getPreflightStatusAction(eventId: string, jobType: SendJob
   };
 }
 
-/** Which invitations are eligible for a given message type — Part 7.7,
- * "add-on sends only go to the newly added, never re-sending to those
- * already invited." */
-async function getRecipientCandidates(eventId: string, jobType: SendJobType) {
-  const supabase = await createClient();
-
-  let query = supabase
-    .from('invitations')
-    .select('id, invite_status, rsvp_status, attendance_status, people!inner(email, contact_preference)')
-    .eq('event_id', eventId)
-    .neq('people.contact_preference', 'do_not_contact')
-    .not('people.email', 'is', null);
-
-  if (jobType === 'invitation') {
-    query = query.in('invite_status', ['planned', 'ready']);
-  } else if (jobType === 'reminder' || jobType === 'priority_follow_up') {
-    query = query.eq('invite_status', 'sent').eq('rsvp_status', 'no_response');
-  } else if (jobType === 'rsvp_confirmation') {
-    query = query.eq('rsvp_status', 'yes');
-  } else if (jobType === 'final_details') {
-    query = query.in('rsvp_status', ['yes']);
-  } else if (jobType === 'waitlist') {
-    query = query.eq('rsvp_status', 'waitlisted');
-  } else if (jobType === 'thank_you') {
-    query = query.eq('attendance_status', 'attended');
-  } else if (jobType === 'post_event_follow_up') {
-    query = query.in('rsvp_status', ['no', 'no_response']);
-  } else if (jobType === 'cancellation') {
-    query = query.in('invite_status', ['sent']);
-  }
-
-  const { data } = await query;
-  return data ?? [];
-}
-
-export interface CreateSendJobResult extends ActionResult {
-  jobId?: string;
-}
+export type { CreateSendJobResult };
 
 export async function createSendJobAction(params: {
   eventId: string;
@@ -159,114 +102,29 @@ export async function createSendJobAction(params: {
   const supabase = await createClient();
   const { eventId, jobType, paceProfile } = params;
 
-  const [{ data: tenant }, { data: event }, { data: message }, { data: form }, tenantSettings, candidates, activeJob] = await Promise.all([
-    supabase.from('tenants').select('is_demo').eq('id', appUser.tenant_id).single(),
-    supabase.from('events').select('public_title').eq('id', eventId).single(),
-    supabase.from('messages').select('id, subject, body, attachment_urls, is_approved').eq('event_id', eventId).eq('message_type', jobType).single(),
-    supabase.from('forms').select('public_token').eq('event_id', eventId).single(),
-    getTenantSettings(appUser.tenant_id),
-    getRecipientCandidates(eventId, jobType),
-    getActiveJobForType(eventId, jobType),
-  ]);
-
   // Re-checked here (not just in the preflight status the UI reads before
   // showing the Send button) since preflight could be stale by the time this
   // actually runs — without this, a second job for the same type would
   // independently re-target the same not-yet-sent recipients as the first,
   // risking the same message going out to the same person twice.
+  const activeJob = await getActiveJobForType(supabase, eventId, jobType);
   if (activeJob) {
     return {
       ok: false,
       error: `A send of this message is already ${activeJob.status} for this event. Cancel or wait for it to finish before starting another.`,
     };
   }
-  if (!message?.is_approved) return { ok: false, error: 'Approve this message before sending.' };
-  if (candidates.length === 0) return { ok: false, error: 'There is no one to send to right now.' };
 
-  const { data: fullInvitations } = await supabase
-    .from('invitations')
-    .select('id, public_token, personalization_note, people(first_name, last_name, preferred_name, email)')
-    .in(
-      'id',
-      candidates.map((c) => c.id)
-    );
-
-  const variants = jobType === 'invitation'
-    ? (await supabase.from('message_variants').select('*').eq('message_id', message.id).eq('is_active', true).order('variant_index')).data ?? []
-    : [];
-
-  const isSimulated = tenant?.is_demo ?? false;
-  // PREVIEW_MODE: compress real pacing (minutes-to-days) down to a handful
-  // of seconds so clicking "Send" is actually watchable in a demo, instead
-  // of looking stalled for the length of a real send. Never applies outside
-  // a preview session — see lib/preview/simulate-worker.ts.
-  const spanMs =
-    process.env.PREVIEW_MODE === 'true'
-      ? Math.min(20_000, Math.max(4_000, candidates.length * 1_500))
-      : getPaceSpanMs(paceProfile, candidates.length);
-  const schedule = buildSendSchedule({ recipientCount: candidates.length, spanMs });
-
-  const variantAssignment =
-    variants.length > 0 ? distributeVariants(candidates.map((c) => c.id), variants) : new Map<string, (typeof variants)[number]>();
-
-  const { data: job, error: jobError } = await supabase
-    .from('send_jobs')
-    .insert({
-      tenant_id: appUser.tenant_id,
-      event_id: eventId,
-      message_id: message.id,
-      job_type: jobType,
-      pace_profile: paceProfile,
-      status: 'running',
-      total_recipients: candidates.length,
-      is_simulated: isSimulated,
-      created_by: appUser.id,
-    })
-    .select('id')
-    .single();
-
-  if (jobError || !job) return { ok: false, error: jobError?.message ?? 'Could not start the send.' };
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-
-  const recipientRows = (fullInvitations ?? []).map((inv, idx) => {
-    const person = Array.isArray(inv.people) ? inv.people[0] : inv.people;
-    const variant = variantAssignment.get(inv.id);
-    const subjectTemplate = variant?.subject ?? message.subject ?? '';
-    const bodyTemplate = variant?.body ?? message.body;
-
-    const formLink = form ? `${appUrl}/r/${form.public_token}?i=${inv.public_token}` : '';
-    const calendarLink = form ? `${appUrl}/api/public/calendar/${form.public_token}` : null;
-
-    const mergeCtx = {
-      greetingName: person ? resolveGreetingName({ preferredName: person.preferred_name, firstName: person.first_name }) : 'there',
-      eventPublicTitle: event?.public_title ?? '',
-      formLink,
-      calendarLink: calendarLink ?? '',
-      hostDisplayName: tenantSettings?.host_display_name ?? '',
-      hostSignature: tenantSettings?.host_signature ?? tenantSettings?.host_display_name ?? '',
-      personalTouch: jobType === 'invitation' ? inv.personalization_note : null,
-    };
-
-    const resolvedBody = appendCalendarLinkIfRelevant(resolveMergeFields(bodyTemplate, mergeCtx), jobType, calendarLink);
-
-    return {
-      tenant_id: appUser.tenant_id,
-      send_job_id: job.id,
-      invitation_id: inv.id,
-      message_variant_id: variant?.id ?? null,
-      resolved_subject: resolveMergeFields(subjectTemplate, mergeCtx),
-      resolved_body: plainTextToHtml(resolvedBody),
-      attachment_urls: message.attachment_urls ?? [],
-      scheduled_at: (schedule[idx] ?? new Date()).toISOString(),
-    };
+  const result = await createSendJobCore(supabase, {
+    tenantId: appUser.tenant_id,
+    createdBy: appUser.id,
+    eventId,
+    jobType,
+    paceProfile,
   });
 
-  const { error: recipientsError } = await supabase.from('send_job_recipients').insert(recipientRows);
-  if (recipientsError) return { ok: false, error: recipientsError.message };
-
-  revalidatePath(`/events/${eventId}`, 'layout');
-  return { ok: true, jobId: job.id };
+  if (result.ok) revalidatePath(`/events/${eventId}`, 'layout');
+  return result;
 }
 
 export interface SendJobProgress {
