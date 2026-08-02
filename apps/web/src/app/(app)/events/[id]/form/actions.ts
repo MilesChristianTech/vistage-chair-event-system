@@ -20,6 +20,7 @@ const DEFAULT_LABELS: Record<string, string> = {
   open_text: 'What would make this event especially valuable to you?',
   short_text: 'Your answer',
   yes_no: 'Yes or no',
+  multiple_choice: 'New question',
 };
 
 export async function addQuestionAction(formId: string, questionType: string): Promise<ActionResult> {
@@ -42,6 +43,7 @@ export async function addQuestionAction(formId: string, questionType: string): P
     label: DEFAULT_LABELS[questionType] ?? 'New question',
     is_required: questionType === 'attendance',
     sort_order: nextOrder,
+    options: questionType === 'multiple_choice' ? ({ choices: ['Option 1', 'Option 2'] } as unknown as Json) : undefined,
   });
 
   if (error) return { ok: false, error: error.message };
@@ -51,10 +53,13 @@ export async function addQuestionAction(formId: string, questionType: string): P
 
 export async function updateQuestionAction(
   questionId: string,
-  fields: { label?: string; help_text?: string | null; is_required?: boolean }
+  fields: { label?: string; help_text?: string | null; is_required?: boolean; options?: { choices: string[] } }
 ): Promise<ActionResult> {
   const supabase = await createClient();
-  const { error } = await supabase.from('form_questions').update(fields).eq('id', questionId);
+  const { error } = await supabase
+    .from('form_questions')
+    .update({ ...fields, options: fields.options as unknown as Json })
+    .eq('id', questionId);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

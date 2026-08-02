@@ -307,7 +307,8 @@ export interface Database {
             | 'dietary_accessibility'
             | 'open_text'
             | 'short_text'
-            | 'yes_no';
+            | 'yes_no'
+            | 'multiple_choice';
           label: string;
           help_text: string | null;
           is_required: boolean;

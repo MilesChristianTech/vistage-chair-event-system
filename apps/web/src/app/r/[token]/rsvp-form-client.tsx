@@ -158,6 +158,34 @@ function QuestionField({
     );
   }
 
+  if (question.question_type === 'multiple_choice') {
+    const choices = ((question.options as { choices?: string[] } | null)?.choices ?? []).filter(Boolean);
+    return (
+      <div>
+        {label}
+        {question.help_text ? <p className="field-hint mb-1">{question.help_text}</p> : null}
+        <div className="space-y-1.5">
+          {choices.map((opt) => (
+            <label
+              key={opt}
+              className="flex items-center gap-2 text-sm text-navy-800 border border-navy-100 rounded px-3 py-2 cursor-pointer has-[:checked]:border-navy-400 has-[:checked]:bg-navy-50"
+            >
+              <input
+                type="radio"
+                name={question.id}
+                required={question.is_required}
+                checked={value === opt}
+                onChange={() => onChange(opt)}
+                className="accent-navy-800"
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (question.question_type === 'guest_count') {
     return (
       <div>

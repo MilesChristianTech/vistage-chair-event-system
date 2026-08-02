@@ -26,7 +26,7 @@ export default async function FormBuilderPage({ params }: { params: { id: string
     <AppPageBody>
       <FormBuilderClient
         form={{ ...form, theme: form.theme as { logoUrl?: string; headerImageUrl?: string; primaryColor?: string; accentColor?: string } | null }}
-        questions={questions ?? []}
+        questions={(questions ?? []).map((q) => ({ ...q, options: q.options as { choices?: string[] } | null }))}
         responseCount={responseCount ?? 0}
       />
     </AppPageBody>

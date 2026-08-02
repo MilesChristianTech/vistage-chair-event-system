@@ -29,6 +29,7 @@ interface FormQuestion {
   help_text: string | null;
   is_required: boolean;
   sort_order: number;
+  options: { choices?: string[] } | null;
 }
 
 interface FormTheme {
@@ -55,6 +56,7 @@ const QUESTION_TEMPLATES: { type: string; label: string; description: string }[]
   { type: 'open_text', label: 'Open question', description: 'A free-response question.' },
   { type: 'short_text', label: 'Short answer', description: 'A brief text field.' },
   { type: 'yes_no', label: 'Yes / No', description: 'A simple custom yes/no question.' },
+  { type: 'multiple_choice', label: 'Multiple choice', description: 'A question with your own list of answer choices.' },
 ];
 
 export default function FormBuilderClient({
@@ -332,11 +334,18 @@ function QuestionCard({
   const [label, setLabel] = useState(question.label);
   const [helpText, setHelpText] = useState(question.help_text ?? '');
   const [isRequired, setIsRequired] = useState(question.is_required);
+  const [choices, setChoices] = useState<string[]>(question.options?.choices ?? []);
 
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const isMultipleChoice = question.question_type === 'multiple_choice';
 
   async function save() {
-    await updateQuestionAction(question.id, { label, help_text: helpText || null, is_required: isRequired });
+    await updateQuestionAction(question.id, {
+      label,
+      help_text: helpText || null,
+      is_required: isRequired,
+      ...(isMultipleChoice ? { options: { choices: choices.filter((c) => c.trim()) } } : {}),
+    });
     setEditing(false);
     onSaved();
   }
@@ -356,6 +365,30 @@ function QuestionCard({
                 <input type="checkbox" checked={isRequired} onChange={(e) => setIsRequired(e.target.checked)} className="accent-navy-800" />
                 Required
               </label>
+              {isMultipleChoice ? (
+                <div>
+                  <p className="field-label">Answer choices</p>
+                  {choices.map((choice, i) => (
+                    <div key={i} className="flex gap-2 mb-1.5">
+                      <input
+                        className="input text-xs"
+                        value={choice}
+                        onChange={(e) => setChoices((c) => c.map((v, idx) => (idx === i ? e.target.value : v)))}
+                      />
+                      <button
+                        type="button"
+                        className="btn-ghost text-xs shrink-0"
+                        onClick={() => setChoices((c) => c.filter((_, idx) => idx !== i))}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn-secondary text-xs" onClick={() => setChoices((c) => [...c, ''])}>
+                    Add choice
+                  </button>
+                </div>
+              ) : null}
               <div className="flex gap-2">
                 <button className="btn-primary text-xs" onClick={save}>
                   Save
@@ -372,6 +405,9 @@ function QuestionCard({
               </p>
               {question.help_text ? <p className="text-xs text-navy-500">{question.help_text}</p> : null}
               <p className="text-xs text-navy-400 mt-1">{question.question_type.replace('_', ' ')}</p>
+              {isMultipleChoice && question.options?.choices?.length ? (
+                <p className="text-xs text-navy-400 mt-0.5">Choices: {question.options.choices.join(', ')}</p>
+              ) : null}
             </>
           )}
         </div>
