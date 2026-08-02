@@ -1,6 +1,13 @@
 import { getPublicFormData } from '@/lib/public-form';
 import RsvpFormClient from './rsvp-form-client';
 
+// This page uses the service-role client (no cookies/session), so Next.js
+// has no automatic signal to render it dynamically per-request - without
+// this, it can be cached and keep serving a stale snapshot (intro text,
+// branding, published status) after a Host makes changes, which is exactly
+// the opposite of "reads live" this page is supposed to guarantee.
+export const dynamic = 'force-dynamic';
+
 export default async function PublicRsvpPage({
   params,
   searchParams,
