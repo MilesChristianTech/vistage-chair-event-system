@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/service';
+
+const TOKEN = '947c5394-cb7b-4930-b9f8-c1489d1450a2';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -16,6 +19,16 @@ export async function GET() {
     .select('id, intro_text, theme, updated_at')
     .eq('id', '3355a434-33f1-46b8-ba22-897cac993158')
     .maybeSingle();
+
+  // Force-purge whatever Vercel cached for these paths back when they were
+  // first deployed (before force-dynamic existed on them) - adding the
+  // export in a later deploy doesn't retroactively invalidate what was
+  // already cached.
+  revalidatePath(`/r/${TOKEN}`, 'page');
+  revalidatePath(`/api/public/forms/${TOKEN}`, 'page');
+  revalidatePath('/r/[token]', 'page');
+  revalidatePath('/api/public/forms/[token]', 'page');
+  revalidatePath('/r/[token]', 'layout');
 
   return NextResponse.json({
     previewMode: process.env.PREVIEW_MODE ?? '(unset)',
