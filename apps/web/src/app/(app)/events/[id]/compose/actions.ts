@@ -15,6 +15,7 @@ import {
   type SuiteMessageKey,
 } from '@/lib/coach';
 import { AnthropicNotConfiguredError } from '@/lib/anthropic';
+import { resolveMergeFields } from '@/lib/merge-fields';
 import type { Database, Json } from '@/lib/database.types';
 
 type MessageType = Database['public']['Tables']['messages']['Row']['message_type'];
@@ -153,19 +154,59 @@ export async function strengthenDraftAction(params: {
   }
 }
 
+// form_intro / form_confirmation are the odd ones out among message types:
+// every other type is an email sent later, but these two ARE the live
+// public form's intro text / confirmation screen (forms.intro_text /
+// confirmation_text) - a separate row from this drafted message. Approving
+// one here pushes it live immediately; no republish step exists or is
+// needed, since the public form always reads this content fresh.
+async function syncFormTextIfRelevant(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  message: { event_id: string; message_type: string; body: string },
+  tenantId: string
+) {
+  if (message.message_type !== 'form_intro' && message.message_type !== 'form_confirmation') return;
+
+  const tenantSettings = await getTenantSettings(tenantId);
+  // Merge tags that make sense in a per-recipient email don't apply to a
+  // single, un-personalized page every visitor sees — host name/signature
+  // resolve to real values, but greeting/link/personal-touch tags are
+  // stripped rather than left showing literally as "{{greeting_name}}".
+  const resolved = resolveMergeFields(message.body, {
+    greetingName: '',
+    eventPublicTitle: '',
+    formLink: '',
+    hostDisplayName: tenantSettings?.host_display_name ?? '',
+    hostSignature: tenantSettings?.host_signature ?? tenantSettings?.host_display_name ?? '',
+  })
+    .replace(/\{\{greeting_name\}\},?\s*/g, '')
+    .trim();
+
+  const update = message.message_type === 'form_intro' ? { intro_text: resolved } : { confirmation_text: resolved };
+  await supabase.from('forms').update(update).eq('event_id', message.event_id);
+  revalidatePath(`/events/${message.event_id}/form`);
+}
+
 export async function approveMessageAction(messageId: string, approved: boolean): Promise<ActionResult> {
   try {
     const { appUser } = await requireCurrentUser();
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data: message, error } = await supabase
       .from('messages')
       .update({
         is_approved: approved,
         approved_at: approved ? new Date().toISOString() : null,
         approved_by: approved ? appUser.id : null,
       })
-      .eq('id', messageId);
+      .eq('id', messageId)
+      .select('event_id, message_type, body')
+      .single();
     if (error) return { ok: false, error: error.message };
+
+    if (approved && message) {
+      await syncFormTextIfRelevant(supabase, message, appUser.tenant_id);
+    }
+
     return { ok: true };
   } catch (err) {
     console.error('[approve-message]', err);
