@@ -3,6 +3,7 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import { updateBrandingAction, type ActionResult } from './actions';
 import { useSuccessToast } from '@/lib/use-success-toast';
+import ImageUploadField from '@/components/image-upload-field';
 
 interface Branding {
   logoUrl?: string;
@@ -26,14 +27,8 @@ export default function BrandingForm({ initial }: { initial: Branding | null }) 
 
   return (
     <form action={formAction} className="space-y-3 max-w-md">
-      <div>
-        <label className="field-label">Logo URL</label>
-        <input name="logo_url" defaultValue={initial?.logoUrl ?? ''} className="input" placeholder="https://…" />
-      </div>
-      <div>
-        <label className="field-label">Header image URL</label>
-        <input name="header_image_url" defaultValue={initial?.headerImageUrl ?? ''} className="input" placeholder="https://…" />
-      </div>
+      <ImageUploadField name="logo_url" label="Logo" value={initial?.logoUrl ?? ''} />
+      <ImageUploadField name="header_image_url" label="Header image" value={initial?.headerImageUrl ?? ''} />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="field-label">Primary color</label>

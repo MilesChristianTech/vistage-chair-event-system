@@ -13,6 +13,7 @@ import {
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ConfirmAction from '@/components/confirm-action';
+import ImageUploadField from '@/components/image-upload-field';
 import {
   addQuestionAction,
   updateQuestionAction,
@@ -213,16 +214,14 @@ export default function FormBuilderClient({
             this event specifically — a different logo for a co-branded event, for example.
           </p>
           <div className="mb-3">
-            <label className="field-label">Logo URL</label>
-            <input className="input" value={themeLogoUrl} onChange={(e) => setThemeLogoUrl(e.target.value)} placeholder="https://…" />
+            <ImageUploadField name="theme_logo_url" label="Logo" value={themeLogoUrl} onUploaded={setThemeLogoUrl} />
           </div>
           <div className="mb-3">
-            <label className="field-label">Header image URL</label>
-            <input
-              className="input"
+            <ImageUploadField
+              name="theme_header_image_url"
+              label="Header image"
               value={themeHeaderImageUrl}
-              onChange={(e) => setThemeHeaderImageUrl(e.target.value)}
-              placeholder="https://…"
+              onUploaded={setThemeHeaderImageUrl}
             />
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
