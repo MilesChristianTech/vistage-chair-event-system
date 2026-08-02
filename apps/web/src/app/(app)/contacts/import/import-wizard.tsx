@@ -190,7 +190,7 @@ function DropStep({ onFile, error }: { onFile: (file: File) => void; error: stri
           }}
         />
       </label>
-      <p className="text-navy-400 text-xs mt-4">No template needed — we’ll adapt to your file’s columns.</p>
+      <p className="text-navy-400 text-xs mt-4">No template needed - we’ll adapt to your file’s columns.</p>
       {error ? <p className="text-danger text-sm mt-4">{error}</p> : null}
     </div>
   );
@@ -219,7 +219,7 @@ function MappingStep({
     <div className="card p-5">
       <h3>Review the column mapping</h3>
       <p className="text-navy-500 text-sm mb-4">
-        We’ve made our best guess at what each column is. Change anything that’s not right — any column can also
+        We’ve made our best guess at what each column is. Change anything that’s not right - any column can also
         become its own custom field if it doesn’t fit a standard one.
       </p>
       <div className="overflow-x-auto">
@@ -300,7 +300,7 @@ function MappingRow({
   return (
     <tr>
       <td className="px-3 py-2 font-medium text-navy-800">{header || `Column ${idx + 1}`}</td>
-      <td className="px-3 py-2 text-navy-500">{sampleValue || '—'}</td>
+      <td className="px-3 py-2 text-navy-500">{sampleValue || '-'}</td>
       <td className="px-3 py-2">
         {addingField ? (
           <div className="flex items-center gap-2">
@@ -372,7 +372,7 @@ function PreviewStep({
       <p className="text-navy-500 text-sm mb-4">
         Here’s exactly how the first rows will land. {rows.length} {rows.length === 1 ? 'person' : 'people'} total.
         {invalidEmailCount > 0 ? (
-          <span className="text-warn"> {invalidEmailCount} have an email that looks malformed — they’ll still be added, flagged for your attention.</span>
+          <span className="text-warn"> {invalidEmailCount} have an email that looks malformed - they’ll still be added, flagged for your attention.</span>
         ) : null}
       </p>
       <div className="overflow-x-auto">
@@ -399,11 +399,11 @@ function PreviewStep({
                       row.email
                     )
                   ) : (
-                    <span className="text-navy-300">—</span>
+                    <span className="text-navy-300">-</span>
                   )}
                 </td>
-                <td className="px-3 py-2">{row.company || <span className="text-navy-300">—</span>}</td>
-                <td className="px-3 py-2">{row.relationship_type_label || <span className="text-navy-300">—</span>}</td>
+                <td className="px-3 py-2">{row.company || <span className="text-navy-300">-</span>}</td>
+                <td className="px-3 py-2">{row.relationship_type_label || <span className="text-navy-300">-</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -472,7 +472,7 @@ function DedupeStep({
           </div>
         </>
       ) : (
-        <p className="text-navy-700 text-sm mb-4">No duplicates found — every one of these will be added fresh.</p>
+        <p className="text-navy-700 text-sm mb-4">No duplicates found - every one of these will be added fresh.</p>
       )}
 
       {error ? <p className="text-danger text-sm mb-3">{error}</p> : null}
@@ -520,7 +520,7 @@ function DoneStep({ summary, onFinish }: { summary: ImportSummary; onFinish: () 
       </div>
       {summary.flagged > 0 ? (
         <p className="text-navy-500 text-sm mb-4">
-          Flagged records need a quick look — likely a malformed email. Nothing was lost; just fix at your leisure.
+          Flagged records need a quick look - likely a malformed email. Nothing was lost; just fix at your leisure.
         </p>
       ) : null}
       <button className="btn-primary" onClick={onFinish}>

@@ -17,7 +17,7 @@ export default async function EventLayout({
     <div>
       <div className="bg-white border-b border-navy-100 px-8 pt-5">
         <p className="text-xs text-navy-400 mb-1">
-          <a href="/events" className="no-underline text-navy-400 hover:underline">
+          <a href="/events" className="text-navy-400">
             Events
           </a>{' '}
           / {event.public_title}

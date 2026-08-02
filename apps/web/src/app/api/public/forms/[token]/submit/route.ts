@@ -4,7 +4,7 @@ import { queueAutomaticRsvpConfirmation } from '@/lib/auto-confirmation';
 import type { Database, Json } from '@/lib/database.types';
 
 /**
- * Public RSVP submission (Part 3.6, 3.10). No auth — reachable by anyone
+ * Public RSVP submission (Part 3.6, 3.10). No auth - reachable by anyone
  * with the link, which is exactly the point of a hosted RSVP form. Every
  * write here goes through the service-role client with its own narrow
  * checks (is this form actually published?) rather than relying on RLS,
@@ -13,7 +13,7 @@ import type { Database, Json } from '@/lib/database.types';
  * Two things happen, deliberately kept separate (3.10):
  *   1. The raw submission is written to form_responses, untouched, forever.
  *   2. A best-effort attempt matches it to an invitation and updates that
- *      invitation's parsed RSVP fields — but if that matching is wrong or
+ *      invitation's parsed RSVP fields - but if that matching is wrong or
  *      the Host fixes it later, the raw row above is never altered.
  */
 export async function POST(request: NextRequest, { params }: { params: { token: string } }) {
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     }
 
     // Unlike every other message type (which the Host sends manually as a
-    // batch), the RSVP confirmation goes out right away — that's the whole
+    // batch), the RSVP confirmation goes out right away - that's the whole
     // point of it being a confirmation. Silently no-ops if there's no
     // approved rsvp_confirmation message yet.
     if (patch.rsvp_status === 'yes') {

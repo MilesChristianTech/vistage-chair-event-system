@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// The gate — runs before every request except static assets, the marketing
+// The gate - runs before every request except static assets, the marketing
 // landing page and legal pages, the public RSVP form, and their supporting
 // public API routes. Everything else requires a signed-in session.
 const PUBLIC_PATHS = ['/', '/sign-in', '/auth', '/r', '/api/public', '/terms', '/privacy'];
@@ -11,11 +11,11 @@ function isPublicPath(pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
-  // PREVIEW_MODE: no real Supabase project configured yet — skip the auth
+  // PREVIEW_MODE: no real Supabase project configured yet - skip the auth
   // gate entirely so the whole app can be clicked through against the
   // in-memory sample data (lib/preview/*). Never set in a real deployment.
   if (process.env.PREVIEW_MODE === 'true') {
-    // Let /sign-in itself render (it's the real, designed front door — Part
+    // Let /sign-in itself render (it's the real, designed front door - Part
     // 2.5) instead of forcing past it. Only skip the *gate* that would
     // otherwise bounce every other page back to it, since there's no real
     // session to check.
@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Signed-in users get bounced off /sign-in (nothing to do there), but '/'
-  // stays reachable even while signed in — it's the marketing page, and a
+  // stays reachable even while signed in - it's the marketing page, and a
   // signed-in Host should still be able to click back to it from the app.
   if (user && pathname === '/sign-in') {
     return NextResponse.redirect(new URL('/dashboard', request.url));

@@ -2,12 +2,12 @@ import Anthropic from '@anthropic-ai/sdk';
 
 let client: Anthropic | null = null;
 
-/** Lazily constructed so the app can still boot (and degrade gracefully —
+/** Lazily constructed so the app can still boot (and degrade gracefully -
  * Part 11.5, 12) if ANTHROPIC_API_KEY is missing; only Coach-dependent
  * routes fail, and they fail with a plain explanation, not a crash. */
 export function getAnthropicClient(): Anthropic {
-  // Trimmed defensively: a stray trailing newline or space — easy to pick up
-  // when pasting a secret into a web form — is otherwise invisible right up
+  // Trimmed defensively: a stray trailing newline or space - easy to pick up
+  // when pasting a secret into a web form - is otherwise invisible right up
   // until Node's HTTP header validation rejects it outright.
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {

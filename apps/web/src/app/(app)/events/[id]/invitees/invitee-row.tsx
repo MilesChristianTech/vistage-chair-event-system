@@ -22,7 +22,7 @@ export default function InviteeRow({ eventId, invitee }: { eventId: string; invi
     <tr className="hover:bg-navy-50 align-top">
       <td className="px-4 py-2.5">
         {invitee.person ? (
-          <a href={`/contacts/${invitee.person.id}`} className="font-medium text-navy-900 no-underline hover:underline">
+          <a href={`/contacts/${invitee.person.id}`} className="font-medium text-navy-900">
             {invitee.person.first_name} {invitee.person.last_name}
           </a>
         ) : (

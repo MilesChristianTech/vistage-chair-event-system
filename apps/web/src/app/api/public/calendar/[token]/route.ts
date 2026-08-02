@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { buildIcs } from '@/lib/ics';
 
 /** Public "add to calendar" download, reachable via the same public form
- * token as the RSVP form itself — a published form's basic event facts
+ * token as the RSVP form itself - a published form's basic event facts
  * (title, time, location) are already effectively public via that page, so
  * this reuses the same token rather than introducing a new one. */
 export async function GET(request: NextRequest, { params }: { params: { token: string } }) {

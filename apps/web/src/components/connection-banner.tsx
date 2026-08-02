@@ -23,17 +23,17 @@ export default function ConnectionBanner({
     notices.push(
       <Banner key="mailbox" tone="warn">
         Your email isn’t connected yet, so invitations can’t be sent. {' '}
-        <Link href="/settings" className="underline font-medium">
+        <Link href="/settings" className="font-medium">
           Connect your Microsoft account in Settings
         </Link>{' '}
-        — everything else in the app works fine in the meantime.
+        - everything else in the app works fine in the meantime.
       </Banner>
     );
   } else if (mailbox.status === 'needs_reconnect') {
     notices.push(
       <Banner key="mailbox-reconnect" tone="warn">
         Your email connection needs to be refreshed before your next send. {' '}
-        <Link href="/settings" className="underline font-medium">
+        <Link href="/settings" className="font-medium">
           Reconnect in Settings
         </Link>
         .
@@ -42,7 +42,7 @@ export default function ConnectionBanner({
   } else if (mailbox.status === 'throttled') {
     notices.push(
       <Banner key="mailbox-throttled" tone="danger">
-        Microsoft has temporarily throttled your mailbox. Sending is paused automatically and will resume — no
+        Microsoft has temporarily throttled your mailbox. Sending is paused automatically and will resume - no
         action needed unless this persists for more than a few hours.
       </Banner>
     );
@@ -51,7 +51,7 @@ export default function ConnectionBanner({
   if (!anthropicConfigured) {
     notices.push(
       <Banner key="anthropic" tone="neutral">
-        The writing assistant isn’t connected yet — this is a one-time setup step for the operator, not something
+        The writing assistant isn’t connected yet - this is a one-time setup step for the operator, not something
         you need to fix. You can still write and send invitations by hand in the meantime.
       </Banner>
     );

@@ -24,14 +24,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="h-screen flex bg-paper overflow-hidden">
       <Toaster position="bottom-right" toastOptions={{ className: 'font-sans text-sm' }} />
 
-      {/* Fixed to the viewport height and never scrolls itself — logo/nav
+      {/* Fixed to the viewport height and never scrolls itself - logo/nav
           up top and the user/sign-out footer stay put no matter how long
           the page to the right gets. Only <main> below scrolls. */}
       <aside className="relative h-full w-60 shrink-0 flex flex-col bg-gradient-to-b from-navy-950 to-navy-975">
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-white/0 via-white/10 to-white/0" />
 
         <div className="shrink-0 px-5 py-5 border-b border-white/[0.07]">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
+          <Link href="/" className="flex items-center gap-2.5">
             <BrandMark />
             <span className="text-white font-serif text-base leading-tight">Chair Event System</span>
           </Link>

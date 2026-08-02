@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 
 /** Builds a minimal, standards-compliant .ics calendar file for one event.
  * Opens directly in Outlook, Apple Calendar, and Google Calendar's import
- * flow — no per-provider link variants needed. */
+ * flow - no per-provider link variants needed. */
 export function buildIcs(params: {
   uid: string;
   title: string;

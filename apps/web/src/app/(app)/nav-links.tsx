@@ -7,7 +7,7 @@ import { LayoutDashboard, Users, CalendarDays, Settings } from 'lucide-react';
 // Part 10.4: "Consistent, predictable navigation. The same things live in
 // the same places." Five destinations, matching the four movements of the
 // product (1.1) plus Settings. Icons are a visual accent alongside the
-// label (10.3) — never a substitute for the word, per the accessibility
+// label (10.3) - never a substitute for the word, per the accessibility
 // requirement.
 const ITEMS = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },

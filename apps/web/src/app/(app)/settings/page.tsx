@@ -42,7 +42,7 @@ export default async function SettingsPage() {
           <section className="card p-5">
             <h3>Branding</h3>
             <p className="text-navy-500 text-sm mb-4">
-              Applied to your RSVP forms by default — the Host’s events feel like theirs.
+              Applied to your RSVP forms by default - the Host’s events feel like theirs.
             </p>
             <BrandingForm initial={settings?.branding as { logoUrl?: string; headerImageUrl?: string; accentColor?: string; primaryColor?: string } | null} />
           </section>

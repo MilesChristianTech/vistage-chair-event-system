@@ -14,12 +14,12 @@ export default function TermsPage() {
       </LegalSection>
       <LegalSection title="Your data">
         Your contacts, events, drafts, and responses belong to you. We do not sell it, share it with other Hosts, or
-        use it for our own marketing. It is technically isolated from every other Host’s data — see our Privacy
+        use it for our own marketing. It is technically isolated from every other Host’s data - see our Privacy
         Policy for detail.
       </LegalSection>
       <LegalSection title="Sending email on your behalf">
-        When you connect your Microsoft account, you are authorizing the Service to send email from your mailbox —
-        including while you are not actively using the Service — strictly as part of the events you create and
+        When you connect your Microsoft account, you are authorizing the Service to send email from your mailbox -
+        including while you are not actively using the Service - strictly as part of the events you create and
         explicitly approve. We never send anything without your prior review and approval of the message content.
       </LegalSection>
       <LegalSection title="Acceptable use">

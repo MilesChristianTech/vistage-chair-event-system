@@ -2,7 +2,7 @@ import type { GraphAttachment } from './graph';
 
 // Graph's simple sendMail JSON payload (what this app uses, vs. the more
 // complex chunked upload-session API for very large files) caps attachments
-// at a few MB — 3MB leaves real headroom under Microsoft's actual limit.
+// at a few MB - 3MB leaves real headroom under Microsoft's actual limit.
 const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
 
 function guessContentType(url: string): string {
@@ -22,7 +22,7 @@ function guessContentType(url: string): string {
 
 /** Fetches each attachment URL and converts it to the base64 form Graph
  * needs. Best-effort: a file that fails to fetch or is too large is simply
- * dropped (logged) rather than failing the whole send — a missing poster
+ * dropped (logged) rather than failing the whole send - a missing poster
  * PDF shouldn't block an invitation from going out. */
 export async function resolveAttachments(
   refs: { name?: string; url?: string }[]

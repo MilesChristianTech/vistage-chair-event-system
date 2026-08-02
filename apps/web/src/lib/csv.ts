@@ -1,4 +1,4 @@
-/** Minimal, dependency-free CSV writer — quotes any field containing a
+/** Minimal, dependency-free CSV writer - quotes any field containing a
  * comma, quote, or newline, and doubles internal quotes per RFC 4180. */
 export function toCsv(headers: string[], rows: (string | number | null | undefined)[][]): string {
   const escape = (value: string | number | null | undefined): string => {

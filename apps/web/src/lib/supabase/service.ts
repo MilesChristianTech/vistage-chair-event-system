@@ -3,18 +3,18 @@ import type { Database } from '@/lib/database.types';
 import { createMockClient } from '@/lib/preview/mock-client';
 
 /**
- * Service-role Supabase client. Bypasses RLS entirely — Supabase's service
+ * Service-role Supabase client. Bypasses RLS entirely - Supabase's service
  * key always does. This is intentional and necessary for exactly three
  * things in this app:
  *
- *   1. Public form routes (apps/web/src/app/api/public/**) — an anonymous
+ *   1. Public form routes (apps/web/src/app/api/public/**) - an anonymous
  *      invitee has no tenant session, so the server itself must apply the
  *      narrow, purpose-built checks (is this form published? does this
  *      token resolve?) instead of relying on RLS.
- *   2. The send worker (apps/worker) — which must see the shared queue
+ *   2. The send worker (apps/worker) - which must see the shared queue
  *      across ALL tenants at once (Part 7.6).
  *   3. Operator scripts (provisioning tenants, seeding/resetting the demo
- *      tenant) — Part 2.5, 11.3.
+ *      tenant) - Part 2.5, 11.3.
  *
  * NEVER import this file from a Client Component, and never let this key
  * reach the browser (12: "nothing sensitive exposed to the browser").

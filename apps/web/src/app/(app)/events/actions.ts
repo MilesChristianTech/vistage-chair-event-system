@@ -15,7 +15,7 @@ export interface ActionResult {
 }
 
 /** A `datetime-local` input gives a plain wall-clock string with no
- * timezone ("2026-08-15T09:00") — `new Date(...)` on that would parse it in
+ * timezone ("2026-08-15T09:00") - `new Date(...)` on that would parse it in
  * whatever zone the *server* happens to run in, which is wrong for an event
  * the Host picked a specific time_zone for. Parse it explicitly as wall-clock
  * time in the event's own zone instead, then store the correct UTC instant. */
@@ -86,7 +86,7 @@ export async function updateEventAction(eventId: string, _prevState: ActionResul
   }
 
   // Part 6.3: editing event facts ripples forward automatically to
-  // everywhere they're displayed (the form, dashboard, unsent emails) —
+  // everywhere they're displayed (the form, dashboard, unsent emails) -
   // because it's all read live from this same row, that "ripple" requires
   // no special propagation code. It simply never reaches back to alter
   // content already frozen onto send_job_recipients rows (Part 6.4, 7.6).
@@ -113,12 +113,12 @@ export async function deleteEventAction(eventId: string): Promise<ActionResult> 
 }
 
 /** "Templates" (Part request: reuse a past event's setup instead of
- * re-typing everything each time) — implemented as duplicating an existing
+ * re-typing everything each time) - implemented as duplicating an existing
  * event rather than a separate template entity, so every real event
  * doubles as a reusable starting point. Copies the event's facts, its
  * form's structure/text/branding, and its message drafts. Deliberately does
  * NOT copy the date/time, RSVP deadline, invitees, responses, or send
- * history — those are specific to the original occurrence, and draft
+ * history - those are specific to the original occurrence, and draft
  * messages are reset to unapproved since logistics will need review before
  * they're accurate for the new date. */
 export async function duplicateEventAction(eventId: string): Promise<ActionResult> {
@@ -227,7 +227,7 @@ export async function searchPeopleForInviteAction(eventId: string, query: string
   const existingIds = new Set((existing ?? []).map((i) => i.person_id));
 
   // search_people matches name, company, title, email, relationship type
-  // label, the summary note, and any custom field value — shared with the
+  // label, the summary note, and any custom field value - shared with the
   // Contacts list search, so "search by anything" is right in one place.
   const { data } = await supabase.rpc('search_people', {
     p_tenant_id: appUser.tenant_id,

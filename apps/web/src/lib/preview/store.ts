@@ -1,7 +1,7 @@
 // PREVIEW_MODE only. A tiny in-memory "database" backed by a JSON file on
 // disk (so it survives Next.js dev-server module reloads), used in place of
 // Supabase when no real project is configured yet. Never used when
-// PREVIEW_MODE is unset — see lib/supabase/server.ts.
+// PREVIEW_MODE is unset - see lib/supabase/server.ts.
 
 import fs from 'fs';
 import path from 'path';
@@ -30,7 +30,7 @@ function persist() {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(cache, null, 2), 'utf8');
   } catch {
-    // Best-effort only — an in-memory-only fallback is fine for a preview.
+    // Best-effort only - an in-memory-only fallback is fine for a preview.
   }
 }
 

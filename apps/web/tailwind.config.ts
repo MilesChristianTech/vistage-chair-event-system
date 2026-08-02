@@ -1,8 +1,8 @@
 import type { Config } from 'tailwindcss';
 
-// Design language — Part 10. Restrained executive palette: navy + professional
+// Design language - Part 10. Restrained executive palette: navy + professional
 // blue, a single warm gold accent, plentiful white/neutral, non-decorative
-// status colors. The brief: familiar (M365-rooted) but not dated — refined
+// status colors. The brief: familiar (M365-rooted) but not dated - refined
 // depth, glass surfaces, and motion carry the "premium/contemporary" feeling
 // instead of novelty color or shape. Deliberately not the generic
 // purple-to-blue-gradient / Inter-everywhere AI-build look (10.2).
@@ -46,7 +46,7 @@ const config: Config = {
       },
       fontFamily: {
         // A Microsoft/Office-familiar type feeling (10.3) rather than the
-        // generic startup sans. Both are system fonts — no webfont loading,
+        // generic startup sans. Both are system fonts - no webfont loading,
         // and they render identically on the Windows machines this product's
         // primary users are on.
         sans: ['"Segoe UI"', '"Segoe UI Variable"', 'Calibri', 'system-ui', 'sans-serif'],

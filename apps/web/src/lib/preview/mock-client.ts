@@ -1,4 +1,4 @@
-// PREVIEW_MODE only — a tiny stand-in for the Supabase JS client, just
+// PREVIEW_MODE only - a tiny stand-in for the Supabase JS client, just
 // enough of the query-builder surface this app actually uses (see the
 // call-site inventory this was built from) to let the whole UI be clicked
 // through against realistic sample data with no real backend. Never

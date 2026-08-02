@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 // AES-256-GCM encryption for the one genuinely sensitive secret this app
 // stores at rest: each Host's Microsoft Graph refresh token (Part 7.1, 11.1,
-// 12 — "tokens stored securely"). Format: base64(iv):base64(authTag):base64(ciphertext).
+// 12 - "tokens stored securely"). Format: base64(iv):base64(authTag):base64(ciphertext).
 
 function getKey(): Buffer {
   const raw = process.env.TOKEN_ENCRYPTION_KEY;

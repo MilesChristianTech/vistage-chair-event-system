@@ -84,7 +84,7 @@ function TabLink({ eventId, tab, active, label }: { eventId: string; tab: string
   return (
     <a
       href={`/events/${eventId}/responses?tab=${tab}`}
-      className={`px-3 py-1.5 rounded text-sm no-underline ${active ? 'bg-navy-900 text-white' : 'bg-navy-50 text-navy-700 hover:bg-navy-100'}`}
+      className={`px-3 py-1.5 rounded text-sm ${active ? 'bg-navy-900 text-white' : 'bg-navy-50 text-navy-700 hover:bg-navy-100'}`}
     >
       {label}
     </a>

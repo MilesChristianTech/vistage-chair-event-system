@@ -1,10 +1,10 @@
 -- ============================================================================
--- Chair Event System — Messages/Drafts, Forms, Responses
+-- Chair Event System - Messages/Drafts, Forms, Responses
 -- Part 3.5, 3.6, 3.10
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Messages (drafts) — one canonical message per (event, message_type),
+-- Messages (drafts) - one canonical message per (event, message_type),
 -- authored by the Host via the Coach. Part 3.5, 5.3.
 -- ----------------------------------------------------------------------------
 create table messages (
@@ -38,7 +38,7 @@ comment on column messages.is_approved is
   'Every Coach-generated item is a draft until the Host explicitly approves it (3.5, 5.5). Sending is blocked on the invitation message until approved.';
 
 -- ----------------------------------------------------------------------------
--- Message variants — for deliverability at volume (Part 7.5). The canonical
+-- Message variants - for deliverability at volume (Part 7.5). The canonical
 -- message (above) is variant "0" conceptually; additional AI-generated
 -- variants live here and are always visible/editable, never hidden.
 -- ----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ create trigger message_variants_set_updated_at before update on message_variants
   for each row execute function set_updated_at();
 
 -- ----------------------------------------------------------------------------
--- Forms — one hosted RSVP form per event (Part 3.6)
+-- Forms - one hosted RSVP form per event (Part 3.6)
 -- ----------------------------------------------------------------------------
 create table forms (
   id uuid primary key default gen_random_uuid(),
@@ -78,7 +78,7 @@ create table forms (
   -- Unguessable public link identifier. The public form page and public API
   -- routes resolve entirely through the Next.js server (service-role client),
   -- never via direct anon access to Supabase, so this token is the only
-  -- thing standing between "unlisted" and "indexable" — treat it as a secret.
+  -- thing standing between "unlisted" and "indexable" - treat it as a secret.
   public_token uuid not null default gen_random_uuid(),
 
   intro_text text,
@@ -102,7 +102,7 @@ create trigger forms_set_updated_at before update on forms
   for each row execute function set_updated_at();
 
 -- ----------------------------------------------------------------------------
--- Form questions — drag-and-drop assembled, ordered, editable/removable.
+-- Form questions - drag-and-drop assembled, ordered, editable/removable.
 -- ----------------------------------------------------------------------------
 create table form_questions (
   id uuid primary key default gen_random_uuid(),
@@ -134,7 +134,7 @@ create trigger form_questions_set_updated_at before update on form_questions
   for each row execute function set_updated_at();
 
 -- ----------------------------------------------------------------------------
--- Form responses — RAW, immutable submissions (Part 3.10: "preserve raw,
+-- Form responses - RAW, immutable submissions (Part 3.10: "preserve raw,
 -- do normalization/matching in a separate layer"). Never edited in place.
 -- ----------------------------------------------------------------------------
 create table form_responses (

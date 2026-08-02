@@ -6,7 +6,7 @@ import type { Json } from '@/lib/database.types';
  * Everything the public, unauthenticated hosted RSVP form needs, resolved
  * server-side through the service-role client (Part 3.6, and the RLS note
  * in supabase/migrations/0004_rls_policies.sql). The only thing standing
- * between "unlisted" and "open" is the unguessable public_token — every
+ * between "unlisted" and "open" is the unguessable public_token - every
  * function here requires one and returns nothing if it doesn't match a
  * *published* form, so an unpublished or mistyped link reveals nothing.
  */
@@ -61,7 +61,7 @@ export async function getPublicFormData(formToken: string, invitationToken?: str
     .maybeSingle();
 
   // The event's own theme override wins field-by-field over the tenant's
-  // default branding — set a logo tenant-wide once, or override it (or the
+  // default branding - set a logo tenant-wide once, or override it (or the
   // colors) for just this one event.
   const tenantBranding = (tenantSettings?.branding as Record<string, unknown>) ?? {};
   const eventTheme = (form.theme as Record<string, unknown>) ?? {};
@@ -102,7 +102,7 @@ export async function getPublicFormData(formToken: string, invitationToken?: str
 
   const venueLine = event.is_virtual
     ? event.virtual_link
-      ? 'Virtual event — link provided after you RSVP yes'
+      ? 'Virtual event - link provided after you RSVP yes'
       : 'Virtual event'
     : [event.venue_name, event.venue_address].filter(Boolean).join(', ') || null;
 

@@ -15,7 +15,7 @@ export default async function NewEventPage() {
 
   return (
     <>
-      <AppPageHeader title="New event" description="Start with the basics — you can fill in the rest later." />
+      <AppPageHeader title="New event" description="Start with the basics - you can fill in the rest later." />
       <AppPageBody>
         <EventForm action={createEventAction} eventTypes={eventTypes ?? []} submitLabel="Create event" />
       </AppPageBody>

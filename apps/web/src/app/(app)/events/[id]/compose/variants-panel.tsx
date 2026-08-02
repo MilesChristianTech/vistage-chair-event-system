@@ -65,7 +65,7 @@ export default function VariantsPanel({
           <p className="text-navy-500 text-sm max-w-xl">
             For sends above {threshold} recipients, we generate a handful of differently-worded versions of your
             invitation and rotate them across the send so it never looks like one identical email photocopied
-            hundreds of times. Every version means the same thing — only the wording differs — and you can read,
+            hundreds of times. Every version means the same thing - only the wording differs - and you can read,
             edit, or regenerate any of them here before you send.
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function VariantsPanel({
 
       {invitedCount < threshold ? (
         <p className="text-navy-400 text-xs mb-4">
-          This event currently has {invitedCount} invitees, under the {threshold}-recipient threshold — a single
+          This event currently has {invitedCount} invitees, under the {threshold}-recipient threshold - a single
           version is fine, but you’re welcome to generate variants anyway.
         </p>
       ) : null}

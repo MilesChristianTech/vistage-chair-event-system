@@ -28,7 +28,7 @@ export default async function ContactsPage({
 
   // search_people (Part: "search by anything") matches name, company,
   // title, email, relationship type label, the summary note, and any
-  // custom field value in one place — shared with the add-invitees search.
+  // custom field value in one place - shared with the add-invitees search.
   const { data: people } = await supabase
     .rpc('search_people', {
       p_tenant_id: appUser.tenant_id,
@@ -49,7 +49,7 @@ export default async function ContactsPage({
     <>
       <AppPageHeader
         title="Contacts"
-        description="The people in your world — reused across every event."
+        description="The people in your world - reused across every event."
         actions={
           <>
             <a href={exportHref} className="btn-secondary">
@@ -126,9 +126,9 @@ export default async function ContactsPage({
                     className="animate-fade-up hover:bg-navy-50 transition-colors duration-150"
                   >
                     <td className="px-4 py-2.5">
-                      <Link href={`/contacts/${p.id}`} className="flex items-center gap-2.5 no-underline group">
+                      <Link href={`/contacts/${p.id}`} className="flex items-center gap-2.5">
                         <Avatar firstName={p.first_name} lastName={p.last_name} size="sm" />
-                        <span className="font-medium text-navy-900 group-hover:underline">
+                        <span className="font-medium text-navy-900">
                           {p.first_name} {p.last_name}
                         </span>
                       </Link>
@@ -136,7 +136,7 @@ export default async function ContactsPage({
                       {!p.is_active ? <span className="badge-neutral ml-2">Inactive</span> : null}
                     </td>
                     <td className="px-4 py-2.5 text-navy-600">
-                      {p.company || <span className="text-navy-300">—</span>}
+                      {p.company || <span className="text-navy-300">-</span>}
                       {p.title ? <span className="text-navy-400"> · {p.title}</span> : null}
                     </td>
                     <td className="px-4 py-2.5 text-navy-600">
@@ -144,9 +144,9 @@ export default async function ContactsPage({
                     </td>
                     <td className="px-4 py-2.5">
                       {p.relationship_type_id ? (
-                        <span className="badge-neutral">{typeLabel.get(p.relationship_type_id) ?? '—'}</span>
+                        <span className="badge-neutral">{typeLabel.get(p.relationship_type_id) ?? '-'}</span>
                       ) : (
-                        <span className="text-navy-300">—</span>
+                        <span className="text-navy-300">-</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5">

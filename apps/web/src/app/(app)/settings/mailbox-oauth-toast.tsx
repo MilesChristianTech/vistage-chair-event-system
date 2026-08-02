@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
 /** The Microsoft OAuth callback redirects back here with a `ms_connected` or
- * `ms_error` query param — this fires the matching toast once, then strips
+ * `ms_error` query param - this fires the matching toast once, then strips
  * the param from the URL so it can't re-fire on refresh or linger forever
  * as a static banner. */
 export default function MailboxOAuthToast() {
@@ -21,7 +21,7 @@ export default function MailboxOAuthToast() {
     if (connected) {
       toast.success('Your Microsoft account is connected.');
     } else if (error === 'not_configured') {
-      toast.error("Microsoft sign-in isn't set up yet — this is a one-time step for the operator.");
+      toast.error("Microsoft sign-in isn't set up yet - this is a one-time step for the operator.");
     } else if (error) {
       toast.error("Couldn't connect your Microsoft account. Please try again.");
     }

@@ -57,7 +57,7 @@ export async function getPreflightStatusAction(eventId: string, jobType: SendJob
 
   const mailboxReady = isDemo || mailbox?.status === 'connected';
   const mailboxMessage = isDemo
-    ? 'Demo tenant — sending is simulated, no real email will be sent.'
+    ? 'Demo tenant - sending is simulated, no real email will be sent.'
     : mailbox?.status === 'connected'
       ? `Connected as ${mailbox.connected_email}`
       : mailbox?.status === 'needs_reconnect'
@@ -69,11 +69,11 @@ export async function getPreflightStatusAction(eventId: string, jobType: SendJob
   const blockers: string[] = [];
   if (activeJob) {
     blockers.push(
-      `A send of this message is already ${activeJob.status} for this event — check Send history to pause, resume, or cancel it before starting another.`
+      `A send of this message is already ${activeJob.status} for this event - check Send history to pause, resume, or cancel it before starting another.`
     );
   }
   if (!mailboxReady) blockers.push(mailboxMessage);
-  if (!message?.is_approved) blockers.push('This message has not been approved yet — approve it in Compose first.');
+  if (!message?.is_approved) blockers.push('This message has not been approved yet - approve it in Compose first.');
   if (jobType === 'invitation' && !form?.is_published) blockers.push('Your RSVP form is not published yet.');
   if (missingFacts.length > 0) blockers.push(`Missing event details: ${missingFacts.join(', ')}.`);
   if (recipients.length === 0) blockers.push('There is no one to send to right now.');
@@ -104,7 +104,7 @@ export async function createSendJobAction(params: {
 
   // Re-checked here (not just in the preflight status the UI reads before
   // showing the Send button) since preflight could be stale by the time this
-  // actually runs — without this, a second job for the same type would
+  // actually runs - without this, a second job for the same type would
   // independently re-target the same not-yet-sent recipients as the first,
   // risking the same message going out to the same person twice.
   const activeJob = await getActiveJobForType(supabase, eventId, jobType);
@@ -141,7 +141,7 @@ export async function getSendJobProgressAction(jobId: string): Promise<SendJobPr
   const supabase = await createClient();
 
   // PREVIEW_MODE: no separate worker process is running alongside this dev
-  // server, so simulate its core behavior right here — see
+  // server, so simulate its core behavior right here - see
   // lib/preview/simulate-worker.ts for why this is safe and why it's never
   // reached in a real deployment.
   if (process.env.PREVIEW_MODE === 'true') {

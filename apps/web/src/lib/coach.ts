@@ -3,7 +3,7 @@ import { getAnthropicClient, COACH_MODEL } from '@/lib/anthropic';
 /**
  * The Invitation Coach (Part 5) and the message-variation generator
  * (Part 7.5). Every function here is a pure request/response call to
- * Anthropic — no state, no side effects, no sending. Everything it returns
+ * Anthropic - no state, no side effects, no sending. Everything it returns
  * is a draft; the caller (a Server Action) is responsible for persisting it
  * as unapproved and letting the Host review it (Part 5.5: "never send
  * anything automatically").
@@ -26,8 +26,8 @@ export interface EventContext {
 }
 
 const GUARDRAILS = `
-You are the Invitation Coach inside the Chair Event System, helping a Host — a
-respected, commercially sophisticated executive-event convener — write
+You are the Invitation Coach inside the Chair Event System, helping a Host - a
+respected, commercially sophisticated executive-event convener - write
 communications to CEOs, presidents, founders, and senior executives.
 
 Non-negotiable rules (violating any of these is a failure):
@@ -39,16 +39,16 @@ Non-negotiable rules (violating any of these is a failure):
   language. No fake urgency, no manufactured scarcity, no guilt.
 - Never imply endorsement by an organization not explicitly stated in context.
 - RSVP language is always affirmative and human: "Yes, I plan to attend" / "I
-  cannot attend" / "I'm not certain yet" — never "Accept" / "Decline".
+  cannot attend" / "I'm not certain yet" - never "Accept" / "Decline".
 - Respect the recipient's intelligence and time. Do not over-explain basics.
-- Sound like a specific, warm human host — not a marketing department, not a
+- Sound like a specific, warm human host - not a marketing department, not a
   generic AI. Avoid cliché AI phrasing ("I hope this email finds you well",
   "in today's fast-paced world", excessive exclamation points, corporate
   buzzwords).
 
 Quality bar for any invitation-family message (Part 9 of the build spec):
 - Subject line: specific, credible, concise (~35-55 characters), leads with
-  topic/relevance/trusted host — never the word "Invitation".
+  topic/relevance/trusted host - never the word "Invitation".
 - First ~75 words make clear why THIS recipient should care.
 - A logistics block (date, time, location or virtual link, RSVP deadline) is
   scannable and consistent.
@@ -58,8 +58,8 @@ Quality bar for any invitation-family message (Part 9 of the build spec):
 `.trim();
 
 /** Appends the Host's real past emails, when they've provided any (Settings
- * → Coach voice samples), as concrete examples to match — phrasing,
- * formality, format — rather than writing in a generic "AI voice". */
+ * → Coach voice samples), as concrete examples to match - phrasing,
+ * formality, format - rather than writing in a generic "AI voice". */
 function buildSystemPrompt(voiceSamples?: string[]): string {
   if (!voiceSamples || voiceSamples.length === 0) return GUARDRAILS;
 
@@ -71,7 +71,7 @@ function buildSystemPrompt(voiceSamples?: string[]): string {
 
 Matching this Host's real voice:
 The Host has provided real emails they've actually sent before. Study these for their specific phrasing, level of
-formality, sentence length, greeting/sign-off style, and formatting habits — then write in that same voice rather
+formality, sentence length, greeting/sign-off style, and formatting habits - then write in that same voice rather
 than a generic one. Never copy specific facts, names, or details from these examples into a new draft; they are for
 tone and style only.
 
@@ -151,7 +151,7 @@ const DRAFT_SCHEMA = {
 export async function generateInvitationDraft(ctx: EventContext) {
   return callForJSON<{ subject: string; body: string }>({
     system: buildSystemPrompt(ctx.voiceSamples),
-    user: `Write the initial invitation email for this event.\n\n${contextBlock(ctx)}\n\nGreet the recipient as {{greeting_name}} — leave that merge tag literally in the text, it is resolved per-recipient later. Sign off using the host signature block. Return via the tool.`,
+    user: `Write the initial invitation email for this event.\n\n${contextBlock(ctx)}\n\nGreet the recipient as {{greeting_name}} - leave that merge tag literally in the text, it is resolved per-recipient later. Sign off using the host signature block. Return via the tool.`,
     toolName: 'return_draft',
     toolDescription: 'Return the drafted invitation email.',
     schema: DRAFT_SCHEMA,
@@ -200,7 +200,7 @@ Subject: ${currentSubject}
 Body:
 ${currentBody}
 
-Diagnose this draft's weaknesses in relevance, value clarity, and overall clarity — then produce a stronger version. It must NOT sound like marketing copy: no superlatives, no hype, no invented specifics. Also return a short list (2-4 items) of the most consequential improvements you made, in plain language a non-technical Host would appreciate (e.g. "Moved the value proposition into the first sentence so a busy exec sees it immediately").`,
+Diagnose this draft's weaknesses in relevance, value clarity, and overall clarity - then produce a stronger version. It must NOT sound like marketing copy: no superlatives, no hype, no invented specifics. Also return a short list (2-4 items) of the most consequential improvements you made, in plain language a non-technical Host would appreciate (e.g. "Moved the value proposition into the first sentence so a busy exec sees it immediately").`,
     toolName: 'return_strengthened_draft',
     toolDescription: 'Return the strengthened draft and a plain-language list of the key improvements made.',
     schema: {
@@ -275,7 +275,7 @@ ${canonicalBody}
 
 Generate ${count} variants of this exact message for deliverability at volume (Part 7.5 of the build spec). Rules:
 - Every variant must be semantically identical: same facts, same value proposition, same call to action, same meaning.
-- Vary the wording meaningfully — especially the subject line and opening sentence, since spam filters key on those most.
+- Vary the wording meaningfully - especially the subject line and opening sentence, since spam filters key on those most.
 - Every variant must independently meet the same quality bar as the original (not a lesser copy).
 - Keep the {{greeting_name}} merge tag and the RSVP link placeholder "${ctx.formLinkPlaceholder}" in every variant.
 - Do not vary tone into something inconsistent with a warm, credible executive host.`,
@@ -309,7 +309,7 @@ export async function generateHandwrittenTouch(params: {
     system: buildSystemPrompt(ctx.voiceSamples),
     user: `${contextBlock(ctx)}
 
-Write ONE short, genuine personal sentence to open this invitee's email, for ${personFirstName}. It should read like the Host wrote it by hand for this specific person — not a generic pleasantry.
+Write ONE short, genuine personal sentence to open this invitee's email, for ${personFirstName}. It should read like the Host wrote it by hand for this specific person - not a generic pleasantry.
 
 Context the Host chose to share about this relationship: "${personContext}"
 

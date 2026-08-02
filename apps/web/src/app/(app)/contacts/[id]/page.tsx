@@ -37,7 +37,7 @@ export default async function PersonProfilePage({ params }: { params: { id: stri
   const relationshipTypeLabel =
     relationshipTypes?.find((t) => t.id === person.relationship_type_id)?.label ?? null;
 
-  // Part 3.2: "assembled automatically from the person's history" — combine
+  // Part 3.2: "assembled automatically from the person's history" - combine
   // event participation with notes into one chronological timeline.
   type TimelineEntry = { at: string; kind: 'invitation' | 'note'; content: React.ReactNode };
   const timeline: TimelineEntry[] = [];
@@ -50,11 +50,11 @@ export default async function PersonProfilePage({ params }: { params: { id: stri
       kind: 'invitation',
       content: (
         <>
-          <Link href={`/events/${event.id}`} className="font-medium no-underline hover:underline">
+          <Link href={`/events/${event.id}`} className="font-medium">
             {event.public_title}
           </Link>
           <span className="text-navy-500">
-            {' — '}
+            {' - '}
             <RsvpLabel status={inv.rsvp_status} /> · <AttendanceLabel status={inv.attendance_status} />
           </span>
           {inv.personalization_note ? (
@@ -96,7 +96,7 @@ export default async function PersonProfilePage({ params }: { params: { id: stri
               <h3>Interaction timeline</h3>
               {timeline.length === 0 ? (
                 <p className="text-sm text-navy-400">
-                  No history yet — invite {person.first_name} to an event and it will show up here automatically.
+                  No history yet - invite {person.first_name} to an event and it will show up here automatically.
                 </p>
               ) : (
                 <ol className="space-y-4">

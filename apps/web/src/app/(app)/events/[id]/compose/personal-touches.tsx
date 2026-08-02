@@ -17,7 +17,7 @@ export default function PersonalTouches({ eventId, invitations }: { eventId: str
     <div className="card p-5">
       <h3>Personal touches</h3>
       <p className="text-navy-500 text-sm mb-1 max-w-xl">
-        Fast and entirely optional. Add one genuine sentence to anyone who warrants it and skip the rest — most
+        Fast and entirely optional. Add one genuine sentence to anyone who warrants it and skip the rest - most
         invitations won’t have one, and that’s fine. Where you add a line, it appears naturally in their email.
       </p>
       <p className="text-navy-400 text-xs mb-4">{withNote.length} of {invitations.length} have a personal touch so far.</p>
@@ -59,7 +59,7 @@ function TouchRow({ eventId, invitation }: { eventId: string; invitation: Invite
       const result = await suggestHandwrittenTouchAction({
         eventId,
         personFirstName: invitation.person!.first_name,
-        personContext: context || 'No specific context provided — keep it simple and warm.',
+        personContext: context || 'No specific context provided - keep it simple and warm.',
       });
       if (result.ok && result.sentence) {
         setNote(result.sentence);
@@ -80,7 +80,7 @@ function TouchRow({ eventId, invitation }: { eventId: string; invitation: Invite
       <textarea
         className="input mb-2"
         rows={2}
-        placeholder="No personal touch — leave blank to skip"
+        placeholder="No personal touch - leave blank to skip"
         value={note}
         onChange={(e) => {
           setNote(e.target.value);

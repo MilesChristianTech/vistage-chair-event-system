@@ -1,5 +1,5 @@
 -- ============================================================================
--- Chair Event System — Core Schema
+-- Chair Event System - Core Schema
 -- Tenants, users, CRM (people), events, invitations, notes
 -- ============================================================================
 
@@ -17,11 +17,11 @@ create table tenants (
 );
 
 comment on table tenants is 'One row per Host organization. Row-level security keys off this everywhere.';
-comment on column tenants.is_demo is 'True only for the operator-facing demo tenant. Sending must be blocked/simulated for demo tenants — enforced in application logic, see apps/web send preflight.';
+comment on column tenants.is_demo is 'True only for the operator-facing demo tenant. Sending must be blocked/simulated for demo tenants - enforced in application logic, see apps/web send preflight.';
 
 -- ----------------------------------------------------------------------------
 -- App users. One row per authenticated person, mapped 1:1 to auth.users.
--- Provisioned directly by the operator (Part 2.5) — no self-signup in V1.
+-- Provisioned directly by the operator (Part 2.5) - no self-signup in V1.
 -- ----------------------------------------------------------------------------
 create table app_users (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -72,7 +72,7 @@ create table event_types (
 create index event_types_tenant_id_idx on event_types (tenant_id);
 
 -- ----------------------------------------------------------------------------
--- People (the CRM) — Part 3.2
+-- People (the CRM) - Part 3.2
 -- ----------------------------------------------------------------------------
 create table people (
   id uuid primary key default gen_random_uuid(),
@@ -112,7 +112,7 @@ create index people_name_idx on people (tenant_id, last_name, first_name);
 comment on column people.email_normalized is 'Lowercased/trimmed email, maintained automatically for matching. Never shown to the Host directly (3.2).';
 
 -- ----------------------------------------------------------------------------
--- Events — Part 3.3
+-- Events - Part 3.3
 -- ----------------------------------------------------------------------------
 create table events (
   id uuid primary key default gen_random_uuid(),
@@ -152,7 +152,7 @@ create index events_tenant_id_idx on events (tenant_id);
 create index events_status_idx on events (tenant_id, status);
 
 -- ----------------------------------------------------------------------------
--- Invitations — Person x Event — Part 3.4
+-- Invitations - Person x Event - Part 3.4
 -- ----------------------------------------------------------------------------
 create table invitations (
   id uuid primary key default gen_random_uuid(),
@@ -185,7 +185,7 @@ create table invitations (
 
   reminders_sent jsonb not null default '{}'::jsonb,
 
-  -- Calculated recommendation vs. Host override — see 3.4.
+  -- Calculated recommendation vs. Host override - see 3.4.
   calculated_next_action text,
   next_action_overridden_by_host boolean not null default false,
   host_override_status text,
@@ -206,7 +206,7 @@ comment on constraint invitations_event_id_person_id_key on invitations is
   'Enforces "one invitation per person per event" at the database level (3.4, 3.10). Application layer flags attempted duplicates rather than relying only on this, but the constraint is the last line of defense.';
 
 -- ----------------------------------------------------------------------------
--- Notes — contextual, polymorphic (Part 3.7)
+-- Notes - contextual, polymorphic (Part 3.7)
 -- Exactly one of person_id / event_id / invitation_id is set.
 -- ----------------------------------------------------------------------------
 create table notes (

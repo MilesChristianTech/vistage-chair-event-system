@@ -28,7 +28,7 @@ export interface EventFormValues {
 
 // A `datetime-local` input needs a plain wall-clock string with no
 // timezone. The value is stored as a UTC instant, so it must be rendered
-// back in the *event's own* time_zone — not the browser's — or editing an
+// back in the *event's own* time_zone - not the browser's - or editing an
 // event from a different timezone than the one it was created in would
 // silently show (and then resave) the wrong wall-clock time.
 function toLocalInputValue(iso?: string | null, zone?: string | null): string {
@@ -70,7 +70,7 @@ export default function EventForm({
               Internal name *
             </label>
             <input id="internal_name" name="internal_name" required defaultValue={initial?.internal_name ?? ''} className="input" />
-            <p className="field-hint">For your own reference — never shown to invitees.</p>
+            <p className="field-hint">For your own reference - never shown to invitees.</p>
           </div>
           <div>
             <label className="field-label" htmlFor="public_title">

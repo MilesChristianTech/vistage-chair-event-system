@@ -1,9 +1,9 @@
 -- ============================================================================
--- Chair Event System — Automatic tenant provisioning defaults
+-- Chair Event System - Automatic tenant provisioning defaults
 --
 -- "Adding a second Host later is an onboarding task, not an engineering
--- project" (2.3). Whenever a new tenant row is created — the pilot Host,
--- the demo tenant, or any future Host — it should automatically receive
+-- project" (2.3). Whenever a new tenant row is created - the pilot Host,
+-- the demo tenant, or any future Host - it should automatically receive
 -- sensible default settings and editable lookup lists, so the operator
 -- never has to hand-seed those tables per tenant.
 -- ============================================================================
@@ -41,4 +41,4 @@ create trigger tenants_provision_defaults after insert on tenants
   for each row execute function provision_new_tenant();
 
 comment on function provision_new_tenant is
-  'Fires on every new tenant (real Host or demo). Keeps onboarding a one-row insert instead of a multi-table manual seed — see scripts/provision-tenant.ts.';
+  'Fires on every new tenant (real Host or demo). Keeps onboarding a one-row insert instead of a multi-table manual seed - see scripts/provision-tenant.ts.';

@@ -2,7 +2,7 @@ import { createDecipheriv } from 'crypto';
 
 // Mirrors apps/web/src/lib/crypto.ts's format exactly. Duplicated rather
 // than shared via a package because the worker is deployed as its own
-// process (Railway) separate from the Next.js app (Vercel) — see Part 2.1.
+// process (Railway) separate from the Next.js app (Vercel) - see Part 2.1.
 // The worker only ever needs to decrypt (the Host's browser session, via
 // the Next.js app, is what encrypts a token at connect time).
 

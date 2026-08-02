@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  * The gate for every consequential action in the product (Part 6.2): a
  * calm, plain-language statement of what will actually happen, a clear
  * confirm and a clear cancel, never the default click. Used for sends,
- * publishing, and deletes alike — the wording is supplied by the caller so
+ * publishing, and deletes alike - the wording is supplied by the caller so
  * it always states who/how many/when for that specific action.
  */
 export default function ConfirmAction({

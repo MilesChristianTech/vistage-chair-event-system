@@ -24,10 +24,10 @@
   h3 { @apply text-lg font-semibold mb-1; letter-spacing: -0.005em; }
 
   a {
-    @apply text-navy-700 underline decoration-navy-200 underline-offset-2;
+    @apply text-navy-700;
   }
 
-  /* A calmer, more deliberate focus ring than the browser default — still
+  /* A calmer, more deliberate focus ring than the browser default - still
      always visible (10.3 accessibility is non-negotiable), just refined. */
   :focus-visible {
     outline: 2px solid theme('colors.gold.400');
@@ -40,7 +40,7 @@
     color: theme('colors.navy.950');
   }
 
-  /* Custom scrollbar — subtle, not the bare-metal OS default. */
+  /* Custom scrollbar - subtle, not the bare-metal OS default. */
   * {
     scrollbar-width: thin;
     scrollbar-color: theme('colors.navy.200') transparent;
@@ -55,7 +55,7 @@
   }
   *::-webkit-scrollbar-thumb:hover { background: theme('colors.navy.300'); background-clip: padding-box; }
 
-  /* Never convey meaning by color alone (10.3) — every status also gets a
+  /* Never convey meaning by color alone (10.3) - every status also gets a
      label or icon in markup; these classes are the color half only. */
   .status-dot {
     @apply inline-block h-2 w-2 rounded-full align-middle;

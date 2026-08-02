@@ -10,7 +10,7 @@ export interface ActionResult {
   error?: string;
 }
 
-// Part 3.10: "a clear one-click way for the Host to match them" — resolving
+// Part 3.10: "a clear one-click way for the Host to match them" - resolving
 // an exception never touches the raw form_responses row, it only records
 // the resolution and updates the invitation.
 export async function resolveExceptionAction(responseId: string, invitationId: string): Promise<ActionResult> {
@@ -76,7 +76,7 @@ export async function resolveExceptionAction(responseId: string, invitationId: s
 
 // Part 3.10: "Always allow manual entry of a response the Host received by
 // email, phone, or in person, and never let that manual entry corrupt the
-// raw form data." — recorded as its own form_responses row with
+// raw form data." - recorded as its own form_responses row with
 // match_status='manual_entry', kept just as immutable as a web submission.
 export async function recordManualResponseAction(params: {
   eventId: string;
@@ -89,7 +89,7 @@ export async function recordManualResponseAction(params: {
   const supabase = await createClient();
 
   const { data: form } = await supabase.from('forms').select('id').eq('event_id', params.eventId).single();
-  if (!form) return { ok: false, error: 'This event has no form record — that should never happen.' };
+  if (!form) return { ok: false, error: 'This event has no form record - that should never happen.' };
 
   await supabase.from('form_responses').insert({
     tenant_id: appUser.tenant_id,

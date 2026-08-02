@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import BrandMark from '@/components/brand-mark';
 
-// The one place this product gets to make a first impression — still the
+// The one place this product gets to make a first impression - still the
 // minimal, no-marketing front door the spec requires (2.5/10.4), just
 // executed with more depth: an animated aurora field instead of a flat
 // navy fill, a glass-edged mark, and a soft entrance instead of a hard cut.

@@ -5,11 +5,11 @@ import { refreshAccessToken, sendMail, classifyGraphError } from './graph';
 import { resolveAttachments } from './attachments';
 
 /**
- * The send worker (Part 2.2, 7.6) — the single most important reliability
+ * The send worker (Part 2.2, 7.6) - the single most important reliability
  * component in the product. It holds nothing important in memory: every
  * cycle it asks the database "what's due next, across every tenant?", acts
  * on a small batch, and writes the result back immediately. If this process
- * is killed at any point — mid-batch, mid-send, between cycles — the next
+ * is killed at any point - mid-batch, mid-send, between cycles - the next
  * start (by Railway's own restart policy, or a fresh deploy) picks up
  * exactly where the database says to, with no double-sends and no skips.
  *
@@ -22,7 +22,7 @@ const REAP_EVERY_N_CYCLES = 24; // roughly every 2 minutes at a 5s poll interval
 
 const supabase = getServiceClient();
 
-// Pure performance cache — losing it costs one extra token refresh, nothing
+// Pure performance cache - losing it costs one extra token refresh, nothing
 // more. Never treated as a source of truth (2.2).
 const accessTokenCache = new Map<string, { accessToken: string; expiresAt: number }>();
 
@@ -84,7 +84,7 @@ interface ClaimedRecipient {
 async function processRecipient(row: ClaimedRecipient) {
   const { data: job } = await supabase.from('send_jobs').select('*').eq('id', row.send_job_id).single();
   if (!job) {
-    console.error(`[worker] send_job ${row.send_job_id} missing for recipient ${row.id} — marking failed`);
+    console.error(`[worker] send_job ${row.send_job_id} missing for recipient ${row.id} - marking failed`);
     await supabase
       .from('send_job_recipients')
       .update({ status: 'failed', last_error: 'Parent send job not found' })
@@ -109,23 +109,23 @@ async function processRecipient(row: ClaimedRecipient) {
     return;
   }
 
-  // Demo tenants never send real email (Part 2.5) — simulate delivery so
+  // Demo tenants never send real email (Part 2.5) - simulate delivery so
   // the operator can demo pacing/progress/variants safely.
   if (job.is_simulated) {
     await markSent(row, job);
-    console.log(`[worker] (simulated) sent to ${person.email} — job ${job.id}`);
+    console.log(`[worker] (simulated) sent to ${person.email} - job ${job.id}`);
     return;
   }
 
   const tokenResult = await getAccessTokenForTenant(row.tenant_id);
   if (!tokenResult.ok) {
-    // Not the recipient's fault — release the claim and let it retry once
+    // Not the recipient's fault - release the claim and let it retry once
     // the Host reconnects, without burning an attempt.
     await supabase
       .from('send_job_recipients')
       .update({ status: 'queued', claimed_at: null })
       .eq('id', row.id);
-    console.warn(`[worker] tenant ${row.tenant_id} mailbox ${tokenResult.reason} — recipient ${row.id} requeued`);
+    console.warn(`[worker] tenant ${row.tenant_id} mailbox ${tokenResult.reason} - recipient ${row.id} requeued`);
     return;
   }
 
@@ -142,7 +142,7 @@ async function processRecipient(row: ClaimedRecipient) {
 
   if (result.ok) {
     await markSent(row, job);
-    console.log(`[worker] sent to ${person.email} — job ${job.id}`);
+    console.log(`[worker] sent to ${person.email} - job ${job.id}`);
     return;
   }
 
@@ -160,7 +160,7 @@ async function processRecipient(row: ClaimedRecipient) {
       .from('mailbox_connections')
       .update({ status: 'throttled', last_error: 'Microsoft is temporarily rate-limiting this mailbox.' })
       .eq('tenant_id', row.tenant_id);
-    console.warn(`[worker] throttled for tenant ${row.tenant_id} — backing off recipient ${row.id}`);
+    console.warn(`[worker] throttled for tenant ${row.tenant_id} - backing off recipient ${row.id}`);
     return;
   }
 
@@ -191,7 +191,7 @@ async function processRecipient(row: ClaimedRecipient) {
     return;
   }
 
-  // Permanent failure (or too many transient retries) — surfaced to the
+  // Permanent failure (or too many transient retries) - surfaced to the
   // Host as "needs attention" rather than silently dropped (Part 7.6).
   await supabase
     .from('send_job_recipients')
@@ -205,7 +205,7 @@ async function processRecipient(row: ClaimedRecipient) {
 // Note for future multi-worker scaling (Part 7.6 anticipates this):
 // claim_due_send_recipients() is safe across multiple worker processes
 // (SELECT ... FOR UPDATE SKIP LOCKED), but the read-then-write increment of
-// send_jobs.sent_count below is not — two workers finishing a send for the
+// send_jobs.sent_count below is not - two workers finishing a send for the
 // same job in the same instant could race and lose an increment. Harmless
 // today (the pilot runs a single worker instance), but if a second worker
 // is ever added, replace this with an atomic SQL increment (a small RPC

@@ -23,7 +23,7 @@ export default function AdvancedSettingsForm({ initial }: { initial: Settings })
   return (
     <form action={formAction} className="space-y-3 max-w-md">
       <p className="text-navy-500 text-xs -mt-1 mb-2">
-        Controls the message-variation feature (Part 7.5). The defaults are sensible for almost everyone — change
+        Controls the message-variation feature (Part 7.5). The defaults are sensible for almost everyone - change
         these only if you know what you’re doing.
       </p>
       <div>

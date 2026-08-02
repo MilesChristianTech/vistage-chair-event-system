@@ -17,10 +17,10 @@ Maps directly to Part 15 of the build spec. Check these off against a real deplo
 
 ## Sending (the critical path)
 
-- [ ] Seed or create a test event with 400+ invitees (the demo seed script gives you a smaller sample — for real volume testing, import a large test list). Start a send; confirm the pacing recommendation shown matches the volume (spread over 1–2 days recommended at this size). (`lib/pacing.ts`, `events/[id]/send`)
+- [ ] Seed or create a test event with 400+ invitees (the demo seed script gives you a smaller sample - for real volume testing, import a large test list). Start a send; confirm the pacing recommendation shown matches the volume (spread over 1–2 days recommended at this size). (`lib/pacing.ts`, `events/[id]/send`)
 - [ ] Confirm message variants are generated above the configured threshold (default 60) and that consecutive `send_job_recipients` rows never share the same `message_variant_id` (query the table directly, or verify visually in Compose → Variants). (`lib/variant-distribution.ts`)
 - [ ] Add a personal touch to 2–3 invitees and skip the rest; confirm the resulting emails include it only where added.
-- [ ] **Durability test:** start a send of at least 20 recipients with a fast pace, then stop the worker process (Ctrl+C locally, or redeploy/restart on Railway) mid-send. Restart it. Confirm every recipient is eventually sent exactly once — check `send_job_recipients` for any row stuck in `sending` for more than 10 minutes (should self-heal via `reap_stuck_send_recipients`), and confirm no duplicate sends land in your test inbox.
+- [ ] **Durability test:** start a send of at least 20 recipients with a fast pace, then stop the worker process (Ctrl+C locally, or redeploy/restart on Railway) mid-send. Restart it. Confirm every recipient is eventually sent exactly once - check `send_job_recipients` for any row stuck in `sending` for more than 10 minutes (should self-heal via `reap_stuck_send_recipients`), and confirm no duplicate sends land in your test inbox.
 - [ ] Close the browser entirely during an active send; confirm progress continues and is correctly reflected when you reopen the Send tab later.
 - [ ] Disconnect the mailbox (Settings → Disconnect) mid-way through building a send; confirm the pre-flight check blocks the send with a plain explanation, not a cryptic error.
 - [ ] Run two sends for two different tenants at the same time (real Host + demo tenant, or two provisioned test Hosts); confirm both progress without blocking each other.
@@ -42,7 +42,7 @@ Maps directly to Part 15 of the build spec. Check these off against a real deplo
 ## Design and orientation
 
 - [ ] Sign in as a brand-new test Host; confirm you land on an oriented Home screen, not a blank table, and that the primary path (Contacts → Events → Compose → Form → Send) is obvious within seconds.
-- [ ] Visually confirm the interface reads as calm and Microsoft/Office-familiar — no purple gradients, no icon soup, generous whitespace — and that status is never conveyed by color alone (check badges/dots always carry a text label too).
+- [ ] Visually confirm the interface reads as calm and Microsoft/Office-familiar - no purple gradients, no icon soup, generous whitespace - and that status is never conveyed by color alone (check badges/dots always carry a text label too).
 - [ ] Tab through a form and a table using only the keyboard; confirm focus order is sane and nothing is a mouse-only trap.
 
 ## Connections and resilience

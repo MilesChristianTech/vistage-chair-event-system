@@ -66,7 +66,7 @@ export default async function EventDashboardPage({
         <MetricCard label="No response" value={metrics.noResponse} icon={MailQuestion} index={5} />
         <MetricCard
           label="Capacity"
-          value={metrics.capacity != null ? `${metrics.expectedHeadcount}/${metrics.capacity}` : '—'}
+          value={metrics.capacity != null ? `${metrics.expectedHeadcount}/${metrics.capacity}` : '-'}
           icon={Gauge}
           accent={metrics.isOverCapacity ? 'danger' : undefined}
           index={6}
@@ -86,7 +86,7 @@ export default async function EventDashboardPage({
         <div>
           <h3 className="mb-2">Next actions</h3>
           {nextActions.length === 0 ? (
-            <div className="card p-4 text-sm text-navy-500">Nothing urgent — you’re caught up.</div>
+            <div className="card p-4 text-sm text-navy-500">Nothing urgent - you’re caught up.</div>
           ) : (
             <div className="card divide-y divide-navy-100 overflow-hidden">
               {nextActions.map((action, i) => (
@@ -102,7 +102,7 @@ export default async function EventDashboardPage({
             </div>
           )}
           <div className="mt-3">
-            <Link href={`/events/${event.id}/responses`} className="text-sm underline">
+            <Link href={`/events/${event.id}/responses`} className="text-sm font-medium">
               View responses & exceptions →
             </Link>
           </div>
@@ -140,7 +140,7 @@ export default async function EventDashboardPage({
 }
 
 function formatPct(value: number | null): string {
-  if (value == null) return '—';
+  if (value == null) return '-';
   return `${Math.round(value * 100)}%`;
 }
 

@@ -11,7 +11,7 @@ const CONTACT_PREFERENCE_LABELS: Record<string, string> = {
 
 /**
  * Exports the Host's contacts as a CSV file, honoring whatever
- * search/type/status filter is active on the Contacts page — "export what
+ * search/type/status filter is active on the Contacts page - "export what
  * I'm looking at," not a separate hidden dataset. Authenticated via the
  * normal session-scoped client (RLS applies), same as every other page.
  */

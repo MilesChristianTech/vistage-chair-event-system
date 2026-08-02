@@ -1,4 +1,4 @@
-// Deterministic, on-brand initials avatar — no images to manage, no
+// Deterministic, on-brand initials avatar - no images to manage, no
 // external service, and every person gets a stable color across visits.
 const PALETTE = [
   'from-navy-600 to-navy-800',

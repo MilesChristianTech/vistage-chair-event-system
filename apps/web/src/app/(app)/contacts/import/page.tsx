@@ -14,7 +14,7 @@ export default async function ImportContactsPage() {
 
   return (
     <>
-      <AppPageHeader title="Import contacts" description="Drop in a spreadsheet — no template required." />
+      <AppPageHeader title="Import contacts" description="Drop in a spreadsheet - no template required." />
       <AppPageBody>
         <ImportWizard customFieldDefinitions={customFieldDefinitions ?? []} />
       </AppPageBody>

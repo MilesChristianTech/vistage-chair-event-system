@@ -4,7 +4,7 @@ import { resolveGreetingName, resolveMergeFields, plainTextToHtml, appendCalenda
 
 /**
  * Fires the moment someone RSVPs "yes" on the public form (Part 7's
- * rsvp_confirmation message is meant to go out "immediately" — unlike every
+ * rsvp_confirmation message is meant to go out "immediately" - unlike every
  * other message type, which the Host triggers manually as a batch from the
  * Send page). Uses the service-role client since it runs from the
  * unauthenticated public submit route. Silently no-ops if there's no

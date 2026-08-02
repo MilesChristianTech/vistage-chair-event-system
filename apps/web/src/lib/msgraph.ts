@@ -7,7 +7,7 @@ import { ConfidentialClientApplication } from '@azure/msal-node';
  * the Host is away (Part 2.2).
  *
  * One Azure AD app registration (owner's one-time setup, see
- * docs/OWNER_SETUP_CHECKLIST.md) serves every tenant — this is standard
+ * docs/OWNER_SETUP_CHECKLIST.md) serves every tenant - this is standard
  * multi-tenant OAuth, not a per-Host app registration.
  */
 
@@ -63,7 +63,7 @@ export async function exchangeMicrosoftCode(code: string) {
 
   // msal-node's public types don't expose the refresh token on the result
   // object (it manages its own cache), so we pull it out of the token cache
-  // for our own encrypted storage — this app needs to hold it itself since
+  // for our own encrypted storage - this app needs to hold it itself since
   // the send worker is a separate process/service without access to msal's
   // in-memory cache.
   const cache = msal.getTokenCache().serialize();
@@ -92,7 +92,7 @@ export async function refreshMicrosoftAccessToken(refreshToken: string) {
   });
 
   if (!result) {
-    throw new Error('Microsoft refresh failed — the connection likely needs to be re-authorized.');
+    throw new Error('Microsoft refresh failed - the connection likely needs to be re-authorized.');
   }
 
   return {

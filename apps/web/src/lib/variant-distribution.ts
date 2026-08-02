@@ -1,7 +1,7 @@
 /**
  * Message variation distribution (Part 7.5). Given N recipients and K
- * variants, produce an assignment where variants are interleaved —
- * never large contiguous blocks of one version — so the send never
+ * variants, produce an assignment where variants are interleaved -
+ * never large contiguous blocks of one version - so the send never
  * recreates the "identical burst" pattern spam filters watch for.
  */
 export function distributeVariants<T>(recipientIds: string[], variants: T[]): Map<string, T> {

@@ -158,13 +158,13 @@ export default function ComposeClient({
   }
 
   // These three are the only message types that actually do something
-  // automatically once approved — every other type still requires a
+  // automatically once approved - every other type still requires a
   // deliberate manual Send. Worth telling the Host plainly in the moment
   // rather than leaving them to discover (or not discover) it later.
   const AUTO_BEHAVIOR_MESSAGE: Record<string, string> = {
-    rsvp_confirmation: 'Approved — this will now send automatically the moment someone RSVPs yes.',
-    form_intro: 'Approved — this is now live at the top of your RSVP form.',
-    form_confirmation: 'Approved — this is now live as your form’s confirmation screen.',
+    rsvp_confirmation: 'Approved - this will now send automatically the moment someone RSVPs yes.',
+    form_intro: 'Approved - this is now live at the top of your RSVP form.',
+    form_confirmation: 'Approved - this is now live as your form’s confirmation screen.',
   };
 
   function toggleApprove() {
@@ -178,7 +178,7 @@ export default function ComposeClient({
         return;
       }
       const autoMessage = willApprove ? AUTO_BEHAVIOR_MESSAGE[selected.message_type] : undefined;
-      toast.success(autoMessage ?? (willApprove ? 'Approved.' : 'Approval removed — back to draft.'));
+      toast.success(autoMessage ?? (willApprove ? 'Approved.' : 'Approval removed - back to draft.'));
       router.refresh();
     });
   }
@@ -189,7 +189,7 @@ export default function ComposeClient({
       const result = await generateSuiteAction(eventId);
       if (!result.ok) setError(result.error || 'Could not generate the message suite.');
       else {
-        toast.success('Full message suite generated — every message is a draft, ready for your review.');
+        toast.success('Full message suite generated - every message is a draft, ready for your review.');
         router.refresh();
       }
     });
@@ -264,7 +264,7 @@ export default function ComposeClient({
                 {selected.is_approved ? (
                   <span className="badge-success">Approved</span>
                 ) : (
-                  <span className="badge-warn">Draft — not approved</span>
+                  <span className="badge-warn">Draft - not approved</span>
                 )}
               </div>
             </div>
@@ -272,7 +272,7 @@ export default function ComposeClient({
             {alreadySentTypes.includes(selected.message_type) ? (
               <div className="rounded border border-navy-200 bg-navy-50 text-navy-700 text-sm px-3 py-2 mb-4">
                 This message already went out to some people. Editing it now only changes what{' '}
-                <em>hasn’t been sent yet</em> — it can’t rewrite what already landed in someone’s inbox. If you need
+                <em>hasn’t been sent yet</em> - it can’t rewrite what already landed in someone’s inbox. If you need
                 to correct something they already received, send a follow-up instead.
               </div>
             ) : null}
@@ -314,7 +314,7 @@ export default function ComposeClient({
                 <div className="mb-4">
                   <label className="field-label">Attachments</label>
                   <p className="field-hint mb-2">
-                    A link to a file (e.g. an event poster PDF) — hosted anywhere reachable by a plain URL. Attached
+                    A link to a file (e.g. an event poster PDF) - hosted anywhere reachable by a plain URL. Attached
                     to every email this message sends.
                   </p>
                   {attachments.map((att, i) => (

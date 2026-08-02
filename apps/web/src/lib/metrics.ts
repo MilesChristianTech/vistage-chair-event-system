@@ -5,7 +5,7 @@ import type { Database } from '@/lib/database.types';
  * Rolls invitations up into the four questions the Host actually cares
  * about (Part 8.1): who's coming, who's a maybe, who to nudge, and are we
  * at capacity. Kept as plain aggregation over `invitations` rather than a
- * materialized view — volumes here (thousands of invitations per tenant,
+ * materialized view - volumes here (thousands of invitations per tenant,
  * per Part 12) are small enough that a direct query stays fast, and a
  * plain query is far easier for a solo operator to reason about than a
  * refresh-triggered view.
@@ -115,7 +115,7 @@ export function buildNextActions(eventId: string, metrics: EventMetrics): NextAc
   if (metrics.isOverCapacity && metrics.remainingSeats != null) {
     actions.push({
       id: 'over-capacity',
-      label: `You're ${Math.abs(metrics.remainingSeats)} over capacity — review the waitlist`,
+      label: `You're ${Math.abs(metrics.remainingSeats)} over capacity - review the waitlist`,
       href: `/events/${eventId}/dashboard?filter=yes`,
       count: Math.abs(metrics.remainingSeats),
     });

@@ -117,7 +117,7 @@ export default function SendClient({
               ) : (
                 <div className="rounded border border-success/30 bg-success-bg text-success text-sm px-4 py-3 mb-4">
                   Ready to send to {preflight.recipientCount} {preflight.recipientCount === 1 ? 'person' : 'people'}.
-                  {preflight.isDemo ? ' (Simulated — this is the demo tenant, no real email will go out.)' : ''}
+                  {preflight.isDemo ? ' (Simulated - this is the demo tenant, no real email will go out.)' : ''}
                 </div>
               )}
 
@@ -153,7 +153,7 @@ export default function SendClient({
                       estimatedFinish
                         ? `, spaced out through around ${formatEta(estimatedFinish)}`
                         : ''
-                    }. You can close this window any time — sending continues on the server, and you can pause or cancel the rest from here later.`}
+                    }. You can close this window any time - sending continues on the server, and you can pause or cancel the rest from here later.`}
                     confirmLabel="Send"
                     onConfirm={handleSend}
                   />

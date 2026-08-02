@@ -1,9 +1,9 @@
 // PREVIEW_MODE only. There's no separate worker process running alongside
 // `next dev` in a preview session, so without this, a send created in the
-// UI would sit at "0 sent" forever — the queue would exist but nothing
+// UI would sit at "0 sent" forever - the queue would exist but nothing
 // would ever drain it. This does the same core job the real worker does
-// (apps/worker/src/index.ts) — claim due rows, mark them sent, update the
-// job — just synchronously, triggered by the Send tab's own 4-second
+// (apps/worker/src/index.ts) - claim due rows, mark them sent, update the
+// job - just synchronously, triggered by the Send tab's own 4-second
 // progress poll instead of a standing background loop. Never imported
 // outside a PREVIEW_MODE code path.
 import { getTable, setTable } from './store';

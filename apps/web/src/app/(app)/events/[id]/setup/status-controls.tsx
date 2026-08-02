@@ -36,7 +36,7 @@ export default function EventStatusControls({ event }: { event: { id: string; st
             </option>
           ))}
         </select>
-        <p className="field-hint">Status shapes what the app shows and suggests — it never blocks you from editing.</p>
+        <p className="field-hint">Status shapes what the app shows and suggests - it never blocks you from editing.</p>
       </div>
 
       <div className="pt-3 border-t border-navy-100">
@@ -54,7 +54,7 @@ export default function EventStatusControls({ event }: { event: { id: string; st
           {isDuplicating ? 'Duplicating…' : 'Duplicate this event'}
         </button>
         <p className="field-hint">
-          Copies the event facts, form questions, and message drafts into a new draft event — a quick way to reuse a
+          Copies the event facts, form questions, and message drafts into a new draft event - a quick way to reuse a
           past event as a starting point. Date, invitees, and responses are never carried over.
         </p>
         {duplicateError ? <p className="text-sm text-danger mt-2">{duplicateError}</p> : null}

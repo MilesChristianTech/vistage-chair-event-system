@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { animate } from 'framer-motion';
 
-/** Small, restrained count-up — a single premium beat on first paint, never
+/** Small, restrained count-up - a single premium beat on first paint, never
  * a gimmick that repeats or distracts from reading the number afterward. */
 export default function CountUp({ value, className }: { value: number; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null);

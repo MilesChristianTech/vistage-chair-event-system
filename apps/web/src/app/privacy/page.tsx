@@ -6,7 +6,7 @@ export default function PrivacyPage() {
       <LegalSection title="What we store">
         For each Host: contact records you provide or import (name, email, company, title, relationship notes),
         events you create, message drafts, RSVP form responses, and engagement signals (approximate email-open and
-        link-click indicators — see below). For each invitee who responds to a form: whatever they submit (name,
+        link-click indicators - see below). For each invitee who responds to a form: whatever they submit (name,
         email, RSVP answer, and any optional fields the Host has added to that event’s form).
       </LegalSection>
       <LegalSection title="What we don’t do">
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       </LegalSection>
       <LegalSection title="Sending email on your behalf">
         If you connect a Microsoft account, we store an encrypted authorization token that lets our server send email
-        through your mailbox as part of events you create and approve — including while you’re not present, which is
+        through your mailbox as part of events you create and approve - including while you’re not present, which is
         what allows a large send to complete over several hours without you keeping a browser open. This token is
         encrypted at rest and is never exposed to any browser.
       </LegalSection>
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
         any AI service.
       </LegalSection>
       <LegalSection title="Engagement signals are approximate">
-        Email open and link-click tracking is inherently imprecise — privacy features in modern mail clients and
+        Email open and link-click tracking is inherently imprecise - privacy features in modern mail clients and
         corporate mail scanners both create false positives. We show these to you as soft signals, never as
         guarantees, and you should not treat them as certain.
       </LegalSection>
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
       </LegalSection>
       <LegalSection title="Your invitees’ rights">
         If you are an invitee (not a Host) and want your information corrected or removed, contact the Host who
-        invited you — they control that data.
+        invited you - they control that data.
       </LegalSection>
       <LegalSection title="Contact">hello@chaireventsystem.com</LegalSection>
     </LegalPage>

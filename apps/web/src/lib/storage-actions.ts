@@ -12,7 +12,7 @@ export interface UploadImageResult {
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']);
 
-/** Replaces "paste a URL" for branding images — a pasted `file:///...` path
+/** Replaces "paste a URL" for branding images - a pasted `file:///...` path
  * (copied from Windows Explorer, easy to do by mistake) only ever resolves
  * on the machine that copied it; nothing else can load it. This actually
  * uploads the file to a public Supabase Storage bucket and returns a real,
@@ -24,7 +24,7 @@ export async function uploadBrandingImageAction(formData: FormData): Promise<Upl
   const file = formData.get('file');
   if (!(file instanceof File)) return { ok: false, error: 'No file provided.' };
   if (!ALLOWED_TYPES.has(file.type)) return { ok: false, error: 'Please choose a PNG, JPEG, GIF, WebP, or SVG image.' };
-  if (file.size > MAX_BYTES) return { ok: false, error: 'That image is larger than 5MB — please choose a smaller one.' };
+  if (file.size > MAX_BYTES) return { ok: false, error: 'That image is larger than 5MB - please choose a smaller one.' };
 
   const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
   const path = `${appUser.tenant_id}/${crypto.randomUUID()}.${ext}`;

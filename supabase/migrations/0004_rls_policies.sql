@@ -1,8 +1,8 @@
 -- ============================================================================
--- Chair Event System — Row-Level Security
+-- Chair Event System - Row-Level Security
 --
 -- Structural tenant isolation (Part 2.3, 12): every tenant-scoped table gets
--- RLS enabled with a single pattern — a row is visible/writable only if its
+-- RLS enabled with a single pattern - a row is visible/writable only if its
 -- tenant_id matches current_tenant_id() for the authenticated caller.
 --
 -- Public-facing surfaces (the hosted RSVP form, submitting a response) are
@@ -95,7 +95,7 @@ create policy engagement_signals_isolation on engagement_signals
   for all using (tenant_id = current_tenant_id()) with check (tenant_id = current_tenant_id());
 
 -- Note: the `service_role` used by the Next.js server and the send worker
--- bypasses RLS entirely by design (Supabase's service key always does) —
+-- bypasses RLS entirely by design (Supabase's service key always does) -
 -- that is how the worker polls send_job_recipients across ALL tenants in
 -- one shared queue (7.6) and how public form routes work. The browser is
 -- NEVER given the service key (see docs/OWNER_SETUP_CHECKLIST.md); the

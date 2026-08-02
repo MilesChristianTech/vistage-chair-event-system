@@ -1,12 +1,12 @@
 /**
  * Merge-field resolution (Part 3.5). Runs once per recipient at enqueue
  * time, producing the frozen, fully-resolved content stored on the send
- * job recipient row (7.6) — so a later edit to the underlying draft can
+ * job recipient row (7.6) - so a later edit to the underlying draft can
  * never alter something already scheduled.
  */
 
 export interface MergeFieldContext {
-  greetingName: string; // preferred name, falling back to first name — never blank (3.5)
+  greetingName: string; // preferred name, falling back to first name - never blank (3.5)
   eventPublicTitle: string;
   formLink: string;
   calendarLink?: string;
@@ -47,7 +47,7 @@ export function resolveMergeFields(template: string, ctx: MergeFieldContext): st
 
 // Only these message types get a calendar link auto-appended when the
 // underlying draft doesn't already reference the {{calendar_link}} tag
-// itself — a Host-written invitation might deliberately not want it, but a
+// itself - a Host-written invitation might deliberately not want it, but a
 // confirmation/logistics message benefits from it by default.
 const CALENDAR_LINK_RELEVANT_TYPES = new Set(['rsvp_confirmation', 'final_details']);
 

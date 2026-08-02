@@ -18,7 +18,7 @@ export type PersonField =
 
 // A column can map to one of the fixed fields above, or to a Host-defined
 // custom field (Part request: "unlimited import columns" / a basic
-// Excel-CRM classifier system) — encoded as `custom:<field_key>` so the
+// Excel-CRM classifier system) - encoded as `custom:<field_key>` so the
 // mapping stays a single value per column without a second parallel map.
 export type ColumnTarget = PersonField | `custom:${string}`;
 
@@ -73,7 +73,7 @@ export function guessColumnMapping(headers: string[]): Record<number, PersonFiel
       }
     }
     // "Name" alone, when first/last aren't both already claimed, is a common
-    // single-column full-name case — flag as first_name only if nothing
+    // single-column full-name case - flag as first_name only if nothing
     // better claimed it, so the Host notices and can fix it in review.
     if (!claimed.has('first_name') && /^name$/i.test(trimmed)) {
       mapping[index] = 'first_name';

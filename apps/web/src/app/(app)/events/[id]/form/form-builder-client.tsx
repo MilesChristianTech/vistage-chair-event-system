@@ -50,7 +50,7 @@ interface FormRow {
 }
 
 const QUESTION_TEMPLATES: { type: string; label: string; description: string }[] = [
-  { type: 'attendance', label: 'Attendance', description: '"Yes / No / Not certain" — the core RSVP question.' },
+  { type: 'attendance', label: 'Attendance', description: '"Yes / No / Not certain" - the core RSVP question.' },
   { type: 'guest_count', label: 'Guest count', description: 'How many guests are they bringing.' },
   { type: 'guest_names', label: 'Guest names', description: "Their guest's name(s)." },
   { type: 'dietary_accessibility', label: 'Dietary / accessibility', description: 'Any needs to accommodate.' },
@@ -71,7 +71,7 @@ export default function FormBuilderClient({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(questions);
-  // `questions` only seeds state on mount — router.refresh() re-fetches it
+  // `questions` only seeds state on mount - router.refresh() re-fetches it
   // server-side after every add/remove/reorder, but without this the local
   // copy never picks up the new prop, so changes only "appear" on a full
   // page reload (which remounts the component from scratch).
@@ -170,7 +170,7 @@ export default function FormBuilderClient({
         {responseCount > 0 ? (
           <div className="rounded border border-warn/30 bg-warn-bg text-warn text-sm px-4 py-3">
             {responseCount} {responseCount === 1 ? 'person has' : 'people have'} already responded to this form.
-            Changing or removing a question they already answered means those answers won’t line up going forward —
+            Changing or removing a question they already answered means those answers won’t line up going forward -
             consider adding a new question instead of editing an existing one.
           </div>
         ) : null}
@@ -178,7 +178,7 @@ export default function FormBuilderClient({
         <div className="card p-5">
           <h3>Questions</h3>
           {items.length === 0 ? (
-            <p className="text-navy-400 text-sm">No questions yet — add some from the templates on the right.</p>
+            <p className="text-navy-400 text-sm">No questions yet - add some from the templates on the right.</p>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={items.map((q) => q.id)} strategy={verticalListSortingStrategy}>
@@ -211,7 +211,7 @@ export default function FormBuilderClient({
           <h3>Branding for this event</h3>
           <p className="text-navy-500 text-sm mb-4">
             Leave any field blank to use your default branding from Settings. Set one here only to override it for
-            this event specifically — a different logo for a co-branded event, for example.
+            this event specifically - a different logo for a co-branded event, for example.
           </p>
           <div className="mb-3">
             <ImageUploadField name="theme_logo_url" label="Logo" value={themeLogoUrl} onUploaded={setThemeLogoUrl} />
@@ -289,7 +289,7 @@ export default function FormBuilderClient({
               <ConfirmAction
                 triggerLabel="Unpublish"
                 triggerClassName="btn-secondary w-full justify-center"
-                consequence="This takes the form offline — anyone who visits the link will see it's no longer accepting responses. Already-collected responses are unaffected."
+                consequence="This takes the form offline - anyone who visits the link will see it's no longer accepting responses. Already-collected responses are unaffected."
                 confirmLabel="Unpublish"
                 successMessage="Form taken offline."
                 onConfirm={async () => {
@@ -303,7 +303,7 @@ export default function FormBuilderClient({
             <ConfirmAction
               triggerLabel="Publish form"
               triggerClassName="btn-primary w-full justify-center"
-              consequence={`This makes your RSVP form live at a public link${items.length === 0 ? ' — you haven\'t added any questions yet' : ''}. You can keep editing it after publishing.`}
+              consequence={`This makes your RSVP form live at a public link${items.length === 0 ? ' - you haven\'t added any questions yet' : ''}. You can keep editing it after publishing.`}
               confirmLabel="Publish"
               successMessage="Your form is live."
               onConfirm={async () => {

@@ -1,5 +1,5 @@
 // The one lettermark used everywhere (sidebar, sign-in). Deliberately
-// simple: a single solid surface and clean serif type — no stacked
+// simple: a single solid surface and clean serif type - no stacked
 // gradients/glows, which read as muddy at small sizes and undercut the
 // "restrained, premium" brief rather than serving it.
 export default function BrandMark({ size = 'md' }: { size?: 'md' | 'lg' }) {

@@ -15,7 +15,7 @@ function getMsalClient(): ConfidentialClientApplication {
 export async function refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; expiresOn: Date }> {
   const msal = getMsalClient();
   const result = await msal.acquireTokenByRefreshToken({ refreshToken, scopes: GRAPH_SCOPES });
-  if (!result) throw new Error('Microsoft refresh failed — mailbox connection likely needs to be re-authorized.');
+  if (!result) throw new Error('Microsoft refresh failed - mailbox connection likely needs to be re-authorized.');
   return { accessToken: result.accessToken, expiresOn: result.expiresOn ?? new Date(Date.now() + 55 * 60_000) };
 }
 

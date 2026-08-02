@@ -6,7 +6,7 @@ export function LegalPage({ title, children }: { title: string; children: React.
     <main className="bg-paper min-h-screen">
       <header className="border-b border-navy-100 bg-white">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
+          <Link href="/" className="flex items-center gap-2.5">
             <BrandMark />
             <span className="text-navy-900 font-serif text-base">Chair Event System</span>
           </Link>

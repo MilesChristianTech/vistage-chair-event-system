@@ -93,7 +93,7 @@ export default function JobProgress({
 
       {current.status === 'running' ? (
         <>
-          <p className="text-xs text-navy-400 mb-2">You can close this window safely — sending continues on the server.</p>
+          <p className="text-xs text-navy-400 mb-2">You can close this window safely - sending continues on the server.</p>
           <div className="flex gap-2">
             <button
               className="btn-secondary text-xs"
@@ -107,7 +107,7 @@ export default function JobProgress({
             <ConfirmAction
               triggerLabel="Cancel remaining"
               triggerClassName="btn-danger text-xs"
-              consequence={`This stops the rest of this send. ${current.sent_count} people have already received it and that can't be undone — everyone still queued (${current.total_recipients - current.sent_count - current.failed_count} people) simply won't receive it.`}
+              consequence={`This stops the rest of this send. ${current.sent_count} people have already received it and that can't be undone - everyone still queued (${current.total_recipients - current.sent_count - current.failed_count} people) simply won't receive it.`}
               confirmLabel="Cancel remaining"
               onConfirm={async () => {
                 await onCancel();

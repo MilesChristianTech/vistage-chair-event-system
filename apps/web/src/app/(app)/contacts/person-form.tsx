@@ -114,7 +114,7 @@ export default function PersonForm({
         </label>
         <input id="email" name="email" type="email" defaultValue={initial?.email ?? ''} className="input" />
         <p className="field-hint">
-          Optional — a person can exist without one, but you won’t be able to email them until it’s added.
+          Optional - a person can exist without one, but you won’t be able to email them until it’s added.
         </p>
       </div>
 
@@ -204,7 +204,7 @@ export default function PersonForm({
       <div className="border-t border-navy-100 pt-4">
         <label className="field-label">Add a custom field</label>
         <p className="field-hint mb-2">
-          Any classifier you want to track — “Prospect status”, “Chapter”, anything — becomes available on every
+          Any classifier you want to track - “Prospect status”, “Chapter”, anything - becomes available on every
           contact going forward.
         </p>
         <div className="flex gap-2">

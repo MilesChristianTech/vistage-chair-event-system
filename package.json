@@ -2,7 +2,7 @@
   "name": "chair-event-system",
   "private": true,
   "version": "1.0.0",
-  "description": "Chair Event System — executive-event invitation, RSVP, and relationship management.",
+  "description": "Chair Event System - executive-event invitation, RSVP, and relationship management.",
   "workspaces": [
     "apps/web",
     "apps/worker"

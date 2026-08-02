@@ -1,13 +1,13 @@
 /**
  * Provisions a new Host (Part 2.5, 11.3): "Accounts are created by the
- * operator directly on the backend." There is no in-app signup in V1 — this
+ * operator directly on the backend." There is no in-app signup in V1 - this
  * script IS the signup flow, run by the operator.
  *
  * Usage:
  *   npm run provision:tenant -- --email host@example.com --password "TempPass123!" --name "Cindy Smith" --tenant "Cindy Smith Coaching"
  *
  * Requires .env.local (or real env vars) with NEXT_PUBLIC_SUPABASE_URL and
- * SUPABASE_SERVICE_ROLE_KEY set — see docs/OWNER_SETUP_CHECKLIST.md.
+ * SUPABASE_SERVICE_ROLE_KEY set - see docs/OWNER_SETUP_CHECKLIST.md.
  */
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';

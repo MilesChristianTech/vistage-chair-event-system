@@ -1,4 +1,4 @@
-// Fixture data for PREVIEW_MODE (local look-around only — never used when a
+// Fixture data for PREVIEW_MODE (local look-around only - never used when a
 // real Supabase project is configured). See lib/preview/store.ts.
 //
 // Deliberately fictional, matching the same spirit as scripts/seed-demo.ts.
@@ -75,7 +75,7 @@ export function buildSeedData(): Record<string, any[]> {
     relationship_type_id: relType,
     contact_preference: pid === 'p-robert' ? 'do_not_contact' : 'email_ok',
     is_active: pid !== 'p-hank',
-    summary_note: pid === 'p-jordan' ? 'Met at the Q1 breakfast — cares most about succession planning.' : null,
+    summary_note: pid === 'p-jordan' ? 'Met at the Q1 breakfast - cares most about succession planning.' : null,
     created_at: daysFromNow(-120),
     updated_at: daysFromNow(-10),
   }));
@@ -90,7 +90,7 @@ export function buildSeedData(): Record<string, any[]> {
       purpose: 'A candid peer discussion on managing margin pressure without sacrificing growth.',
       audience_description: 'CEOs and Presidents of $10M-$150M companies',
       value_proposition: 'Walk away with two or three specific tactics your peers are using right now, not theory.',
-      speaker_details: 'Facilitated discussion — no outside speaker, peer-led.',
+      speaker_details: 'Facilitated discussion - no outside speaker, peer-led.',
       starts_at: daysFromNow(21),
       ends_at: null,
       time_zone: 'America/New_York',
@@ -186,14 +186,14 @@ export function buildSeedData(): Record<string, any[]> {
       person_id: 'p-susan',
       event_id: null,
       invitation_id: null,
-      body: 'Said last year the timing didn’t work — worth a personal follow-up before writing off.',
+      body: 'Said last year the timing didn’t work - worth a personal follow-up before writing off.',
       created_by: USER_ID,
       created_at: daysFromNow(-30),
     },
   ];
 
   const invitationMessageBody =
-    "{{greeting_name}} —\n\nI'm putting together a small roundtable for a handful of CEOs I respect to compare notes on managing rising input costs without giving up margin. No outside speaker, no pitch — just a candid peer conversation.\n\nA few of the people joining are wrestling with exactly the same pressure points you've mentioned to me before, and I think an hour with them would be genuinely useful.\n\nDetails:\nDate: Thursday the 21st, 8:00 AM\nLocation: The Wharton Club, 123 Market Street\nPlease RSVP by the 16th\n\nIf this sounds worthwhile, I'd love to have you there: {{form_link}}\n\n{{host_signature}}";
+    "{{greeting_name}} -\n\nI'm putting together a small roundtable for a handful of CEOs I respect to compare notes on managing rising input costs without giving up margin. No outside speaker, no pitch - just a candid peer conversation.\n\nA few of the people joining are wrestling with exactly the same pressure points you've mentioned to me before, and I think an hour with them would be genuinely useful.\n\nDetails:\nDate: Thursday the 21st, 8:00 AM\nLocation: The Wharton Club, 123 Market Street\nPlease RSVP by the 16th\n\nIf this sounds worthwhile, I'd love to have you there: {{form_link}}\n\n{{host_signature}}";
 
   const messages = [
     {
@@ -280,8 +280,8 @@ export function buildSeedData(): Record<string, any[]> {
       tenant_id: TENANT_ID,
       event_id: EVENT_ID,
       public_token: FORM_TOKEN,
-      intro_text: "We'd love to know if you can join us — it takes less than a minute.",
-      confirmation_text: 'Thank you — we look forward to seeing you there.',
+      intro_text: "We'd love to know if you can join us - it takes less than a minute.",
+      confirmation_text: 'Thank you - we look forward to seeing you there.',
       is_published: true,
       published_at: daysFromNow(-13),
       theme: null,

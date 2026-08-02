@@ -6,7 +6,7 @@ import ComposeClient from './compose-client';
 export const dynamic = 'force-dynamic';
 // Coach drafts (Anthropic tool-use calls, sometimes generating a whole
 // message suite in parallel) can comfortably exceed Vercel's default 10s
-// serverless function limit — this raises it to the Hobby-plan max so a
+// serverless function limit - this raises it to the Hobby-plan max so a
 // slow draft fails with our own friendly error instead of a silent platform
 // timeout that looks like the button did nothing.
 export const maxDuration = 60;
@@ -56,7 +56,7 @@ export default async function ComposePage({ params }: { params: { id: string } }
   const invitedCount = invitations?.length ?? 0;
 
   // Part 6.3/6.5: editing an already-sent message must never look like a
-  // silent no-op or a mysterious lock — the editor stays open (you can
+  // silent no-op or a mysterious lock - the editor stays open (you can
   // always send a fresh correction/update), but it should say plainly that
   // past sends are untouched.
   const { data: sentJobs } = await supabase

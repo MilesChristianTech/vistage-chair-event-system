@@ -38,7 +38,7 @@ export default async function InviteesPage({ params }: { params: { id: string } 
           </div>
           {rows.length === 0 ? (
             <div className="card p-8 text-center text-navy-500 text-sm">
-              No one added yet — search your contacts on the right to get started.
+              No one added yet - search your contacts on the right to get started.
             </div>
           ) : (
             <div className="card overflow-hidden">

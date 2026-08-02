@@ -4,11 +4,11 @@ import BrandMark from '@/components/brand-mark';
 import { signOutAction } from '@/app/sign-in/actions';
 
 // The public marketing front door. Distinct from the sign-in screen (Part
-// 2.5 of the original build spec deliberately kept that minimal) — this is
+// 2.5 of the original build spec deliberately kept that minimal) - this is
 // the page a prospective Host lands on before they have an account at all.
 //
 // Positioning note: this describes itself as built BY a Vistage Chair FOR
-// Vistage Chairs — a peer recommendation — not as an official Vistage
+// Vistage Chairs - a peer recommendation - not as an official Vistage
 // product. No Vistage trademark/logo is used here pending confirmation
 // there's authorization to use it (see chat).
 export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: boolean }) {
@@ -20,7 +20,7 @@ export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: 
         <div className="absolute inset-0 bg-grid-lines bg-[length:42px_42px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,black_10%,transparent_75%)]" aria-hidden />
 
         <header className="relative max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
+          <Link href="/" className="flex items-center gap-2.5">
             <BrandMark />
             <span className="text-white font-serif text-base">Chair Event System</span>
           </Link>
@@ -51,7 +51,7 @@ export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: 
             Run your next executive event without touching a spreadsheet.
           </h1>
           <p className="text-navy-200 text-lg max-w-2xl mx-auto mb-9">
-            Your contacts, your invitations, your hosted RSVP form, and real-time replies — all in one calm, private
+            Your contacts, your invitations, your hosted RSVP form, and real-time replies - all in one calm, private
             place. Every invitation still goes out from your own inbox, written in your own voice.
           </p>
           <div className="flex items-center justify-center gap-3">
@@ -71,7 +71,7 @@ export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: 
         <p className="text-navy-600 mt-3 leading-relaxed">
           Every Vistage Chair juggles the same thing every event cycle: a contact list that lives in three places, an
           invitation that has to feel personal to a CEO’s inbox, and a spreadsheet tracking who said yes. This was
-          built by a working Chair to replace that whole tangle with one tool — nothing enterprise, nothing you have
+          built by a working Chair to replace that whole tangle with one tool - nothing enterprise, nothing you have
           to be technical to use.
         </p>
       </section>
@@ -97,12 +97,12 @@ export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: 
           <FeatureCard
             icon={Send}
             title="Sent from your real inbox"
-            description="Invitations go out through your own Outlook mailbox, paced like a human, so they land in the inbox — not the spam folder."
+            description="Invitations go out through your own Outlook mailbox, paced like a human, so they land in the inbox - not the spam folder."
           />
           <FeatureCard
             icon={LineChart}
             title="Know who to follow up with"
-            description="One dashboard answers who's coming, who's on the fence, and who's worth a personal nudge — no spreadsheet required."
+            description="One dashboard answers who's coming, who's on the fence, and who's worth a personal nudge - no spreadsheet required."
           />
           <FeatureCard
             icon={Check}
@@ -116,7 +116,7 @@ export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: 
       <section className="bg-navy-50 border-y border-navy-100">
         <div className="max-w-md mx-auto px-6 py-16 text-center">
           <h2 className="text-navy-900">Simple pricing</h2>
-          <p className="text-navy-500 text-sm mt-2 mb-6">Priced to cover what it costs to run — not to profit off it.</p>
+          <p className="text-navy-500 text-sm mt-2 mb-6">Priced to cover what it costs to run - not to profit off it.</p>
           <div className="card p-8">
             <p className="text-4xl font-serif text-navy-950">
               $15<span className="text-lg text-navy-400 font-sans">/month</span>

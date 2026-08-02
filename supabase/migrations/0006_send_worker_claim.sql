@@ -1,5 +1,5 @@
 -- ============================================================================
--- Chair Event System — Atomic claim function for the send worker
+-- Chair Event System - Atomic claim function for the send worker
 --
 -- Part 2.2 / 7.6: "the worker holds nothing important in its own memory ...
 -- any interruption is harmless." The atomicity that guarantees exactly-once
@@ -8,7 +8,7 @@
 -- between claiming and sending, the row is left in 'sending' with a
 -- claimed_at timestamp; a companion reaper (below) returns anything stuck
 -- in 'sending' for too long back to 'queued'. This is also what lets a
--- second worker process be added later (7.6) without any redesign — two
+-- second worker process be added later (7.6) without any redesign - two
 -- workers calling this function concurrently can never claim the same row.
 -- ============================================================================
 
@@ -46,7 +46,7 @@ comment on function claim_due_send_recipients is
 
 -- Reaper: anything claimed but not resolved (sent/failed) within 10 minutes
 -- almost certainly means the worker crashed mid-send. Returning it to
--- 'queued' is what makes a crash harmless (2.2) — the next polling cycle,
+-- 'queued' is what makes a crash harmless (2.2) - the next polling cycle,
 -- by this worker or a replacement, simply picks it back up. A message is
 -- occasionally sent twice only in the rare case the crash happened AFTER
 -- Graph accepted the send but BEFORE the result was written back; this is

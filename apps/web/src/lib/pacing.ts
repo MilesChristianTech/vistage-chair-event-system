@@ -1,14 +1,14 @@
 /**
  * Send pacing (Part 7.2, 7.3). A human working through their outbox does not
- * send one email exactly every N seconds — gaps are randomized, and large
+ * send one email exactly every N seconds - gaps are randomized, and large
  * sends are recommended to spread across hours or days for deliverability.
  */
 
 export type PaceProfile = 'immediate' | 'fastest' | 'one_day' | 'two_day' | 'custom';
 
 const IMMEDIATE_GAP_MS = 5_000;
-// Only offered for genuinely small lists — a handful of test recipients, not
-// a real invite list — since sending in a tight burst is exactly the pattern
+// Only offered for genuinely small lists - a handful of test recipients, not
+// a real invite list - since sending in a tight burst is exactly the pattern
 // that trips a new tenant's anti-spam reputation checks at any real volume.
 const IMMEDIATE_MAX_RECIPIENTS = 15;
 
@@ -20,7 +20,7 @@ export interface PaceRecommendation {
   totalSpanMs: number;
 }
 
-/** Part 7.3 — the app recommends based on recipient count, Host chooses. */
+/** Part 7.3 - the app recommends based on recipient count, Host chooses. */
 export function getPaceRecommendations(recipientCount: number): PaceRecommendation[] {
   const hour = 60 * 60 * 1000;
   const day = 24 * hour;
@@ -31,7 +31,7 @@ export function getPaceRecommendations(recipientCount: number): PaceRecommendati
           {
             profile: 'immediate',
             label: 'Send right away',
-            description: `Back to back, about every ${IMMEDIATE_GAP_MS / 1000} seconds. Fine for a small test — not recommended for a real invite list.`,
+            description: `Back to back, about every ${IMMEDIATE_GAP_MS / 1000} seconds. Fine for a small test - not recommended for a real invite list.`,
             isRecommended: false,
             totalSpanMs: recipientCount * IMMEDIATE_GAP_MS,
           },

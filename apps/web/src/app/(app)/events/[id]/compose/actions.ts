@@ -41,7 +41,7 @@ async function buildEventContext(eventId: string, tenantId: string): Promise<Eve
 
   const venueLine = event.is_virtual
     ? event.virtual_link
-      ? `Virtual — ${event.virtual_link}`
+      ? `Virtual - ${event.virtual_link}`
       : 'Virtual (link to be added)'
     : [event.venue_name, event.venue_address].filter(Boolean).join(', ') || null;
 
@@ -65,7 +65,7 @@ async function buildEventContext(eventId: string, tenantId: string): Promise<Eve
 function friendlyAiError(err: unknown): string {
   if (err instanceof AnthropicNotConfiguredError) return err.message;
   // The message shown to the Host is intentionally generic (Anthropic's own
-  // "Connection error." etc. isn't actionable for them) — log the full
+  // "Connection error." etc. isn't actionable for them) - log the full
   // error, including any underlying `cause`, so it's visible in Vercel's
   // Runtime Logs when diagnosing a real failure.
   console.error('[coach]', err, (err as { cause?: unknown } | undefined)?.cause ?? '');
@@ -169,7 +169,7 @@ async function syncFormTextIfRelevant(
 
   const tenantSettings = await getTenantSettings(tenantId);
   // Merge tags that make sense in a per-recipient email don't apply to a
-  // single, un-personalized page every visitor sees — host name/signature
+  // single, un-personalized page every visitor sees - host name/signature
   // resolve to real values, but greeting/link/personal-touch tags are
   // stripped rather than left showing literally as "{{greeting_name}}".
   const resolved = resolveMergeFields(message.body, {
@@ -226,7 +226,7 @@ export async function generateSuiteAction(eventId: string): Promise<ActionResult
     .single();
 
   if (!invitationMessage?.body) {
-    return { ok: false, error: 'Write and save the initial invitation first — the rest of the suite builds on it.' };
+    return { ok: false, error: 'Write and save the initial invitation first - the rest of the suite builds on it.' };
   }
 
   try {

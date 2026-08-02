@@ -24,7 +24,7 @@ export async function requireCurrentUser() {
     .single();
 
   if (error || !appUser) {
-    // A Supabase auth user exists but has no app_users row — this means the
+    // A Supabase auth user exists but has no app_users row - this means the
     // operator hasn't finished provisioning them (see scripts/provision-tenant.ts).
     redirect('/sign-in?error=account_not_provisioned');
   }

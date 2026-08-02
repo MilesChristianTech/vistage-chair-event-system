@@ -75,7 +75,7 @@ function Row({ label, value, empty }: { label: string; value?: string | null; em
   return (
     <div className="flex gap-4">
       <dt className="w-40 shrink-0 text-navy-500">{label}</dt>
-      <dd className="text-navy-900">{value || <span className="text-navy-300">{empty || '—'}</span>}</dd>
+      <dd className="text-navy-900">{value || <span className="text-navy-300">{empty || '-'}</span>}</dd>
     </div>
   );
 }

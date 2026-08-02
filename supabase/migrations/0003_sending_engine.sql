@@ -1,13 +1,13 @@
 -- ============================================================================
--- Chair Event System — Mailbox Connections, Send Jobs, Engagement, Settings
+-- Chair Event System - Mailbox Connections, Send Jobs, Engagement, Settings
 -- Part 2.2, 7, 8, 11.1
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Mailbox connections — one per tenant. Holds the Microsoft Graph refresh
+-- Mailbox connections - one per tenant. Holds the Microsoft Graph refresh
 -- token that lets the server send while the Host is away (2.2, 7.1, 11.1).
 -- Tokens are encrypted at the application layer before being written here
--- (see apps/web/src/lib/crypto.ts) — this column never holds plaintext.
+-- (see apps/web/src/lib/crypto.ts) - this column never holds plaintext.
 -- ----------------------------------------------------------------------------
 create table mailbox_connections (
   id uuid primary key default gen_random_uuid(),
@@ -32,7 +32,7 @@ create trigger mailbox_connections_set_updated_at before update on mailbox_conne
   for each row execute function set_updated_at();
 
 -- ----------------------------------------------------------------------------
--- Tenant-level settings — operator-tunable knobs and Host branding (Part
+-- Tenant-level settings - operator-tunable knobs and Host branding (Part
 -- 7.5 variant threshold, Part 10.4 whitelabel).
 -- ----------------------------------------------------------------------------
 create table tenant_settings (
@@ -62,7 +62,7 @@ comment on column tenant_settings.variant_threshold is
   'Recipient count above which message variation kicks in (7.5). Spec suggests ~60 as a sensible default; operator-tunable, not a hardcoded magic number.';
 
 -- ----------------------------------------------------------------------------
--- Send jobs — one durable record per bulk send (Part 3.8, 7.6)
+-- Send jobs - one durable record per bulk send (Part 3.8, 7.6)
 -- ----------------------------------------------------------------------------
 create table send_jobs (
   id uuid primary key default gen_random_uuid(),
@@ -87,7 +87,7 @@ create table send_jobs (
   failed_count integer not null default 0,
 
   -- True for demo-tenant jobs: the worker simulates delivery instead of
-  -- calling Microsoft Graph (2.5 — "a real email must never leave the demo
+  -- calling Microsoft Graph (2.5 - "a real email must never leave the demo
   -- account").
   is_simulated boolean not null default false,
 
@@ -104,7 +104,7 @@ create trigger send_jobs_set_updated_at before update on send_jobs
   for each row execute function set_updated_at();
 
 -- ----------------------------------------------------------------------------
--- Send job recipients — the actual queue the worker consumes (7.6). This is
+-- Send job recipients - the actual queue the worker consumes (7.6). This is
 -- the durable state that makes sending crash-proof: the worker holds nothing
 -- important in memory, it only asks "what's due next?" and writes results
 -- back immediately (2.2).
@@ -156,7 +156,7 @@ create trigger send_job_recipients_set_updated_at before update on send_job_reci
   for each row execute function set_updated_at();
 
 -- ----------------------------------------------------------------------------
--- Engagement signals — soft, probabilistic (Part 3.9, 8.3)
+-- Engagement signals - soft, probabilistic (Part 3.9, 8.3)
 -- ----------------------------------------------------------------------------
 create table engagement_signals (
   id uuid primary key default gen_random_uuid(),
@@ -177,4 +177,4 @@ create index engagement_signals_invitation_id_idx on engagement_signals (invitat
 create index engagement_signals_tenant_id_idx on engagement_signals (tenant_id);
 
 comment on table engagement_signals is
-  'Explicitly probabilistic (8.3) — Apple Mail Privacy Protection and corporate link pre-fetching both create false positives. Every UI surface reading this table must show the honest clarifying note; never present as certainty.';
+  'Explicitly probabilistic (8.3) - Apple Mail Privacy Protection and corporate link pre-fetching both create false positives. Every UI surface reading this table must show the honest clarifying note; never present as certainty.';

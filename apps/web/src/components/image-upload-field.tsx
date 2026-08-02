@@ -7,7 +7,7 @@ import { uploadBrandingImageAction } from '@/lib/storage-actions';
  * resulting public URL via a hidden input (so it drops into an existing
  * plain <form> the same way a text field would) plus onUploaded for
  * components managing their own state instead. Replaces "paste a URL" for
- * branding images — a pasted local file path (easy to grab by mistake from
+ * branding images - a pasted local file path (easy to grab by mistake from
  * Windows Explorer) can never actually be loaded by a browser other than
  * the one that copied it. */
 export default function ImageUploadField({

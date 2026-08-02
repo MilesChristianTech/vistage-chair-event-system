@@ -4,10 +4,10 @@
  * populated with obviously fictional sample data so the operator can show
  * the whole product without touching a real Host's data. Sending from this
  * tenant is always simulated (see send_jobs.is_simulated and the send
- * worker) — a real email can never leave the demo account.
+ * worker) - a real email can never leave the demo account.
  *
- * Usage: npm run seed:demo   (first time — also creates the demo login)
- *        npm run reset:demo  (same script — wipes and reseeds sample data,
+ * Usage: npm run seed:demo   (first time - also creates the demo login)
+ *        npm run reset:demo  (same script - wipes and reseeds sample data,
  *                             safe to re-run any time before a demo)
  */
 import 'dotenv/config';
@@ -28,7 +28,7 @@ async function main() {
   let { data: tenant } = await supabase.from('tenants').select('id').eq('is_demo', true).maybeSingle();
 
   if (!tenant) {
-    console.log('No demo tenant found — creating one.');
+    console.log('No demo tenant found - creating one.');
     const { data: newTenant, error } = await supabase
       .from('tenants')
       .insert({ name: 'Demo Organization', is_demo: true })
@@ -105,7 +105,7 @@ async function main() {
       purpose: 'A candid peer discussion on managing margin pressure without sacrificing growth.',
       audience_description: 'CEOs and Presidents of $10M-$150M companies',
       value_proposition: 'Walk away with two or three specific tactics your peers are using right now, not theory.',
-      speaker_details: 'Facilitated discussion — no outside speaker, peer-led.',
+      speaker_details: 'Facilitated discussion - no outside speaker, peer-led.',
       starts_at: startsAt.toISOString(),
       time_zone: 'America/New_York',
       is_virtual: false,
@@ -128,7 +128,7 @@ async function main() {
       message_type: 'invitation',
       subject: 'A candid peer conversation on input costs',
       body:
-        "{{greeting_name}} —\n\nI'm putting together a small roundtable for a handful of CEOs I respect to compare notes on managing rising input costs without giving up margin. No outside speaker, no pitch — just a candid peer conversation.\n\nDetails:\nDate: [event date]\nLocation: The Wharton Club\nRSVP by: [deadline]\n\nIf this sounds useful, I'd love to have you there: {{form_link}}\n\n{{host_signature}}",
+        "{{greeting_name}} -\n\nI'm putting together a small roundtable for a handful of CEOs I respect to compare notes on managing rising input costs without giving up margin. No outside speaker, no pitch - just a candid peer conversation.\n\nDetails:\nDate: [event date]\nLocation: The Wharton Club\nRSVP by: [deadline]\n\nIf this sounds useful, I'd love to have you there: {{form_link}}\n\n{{host_signature}}",
       is_approved: true,
       approved_at: new Date().toISOString(),
     })
@@ -140,8 +140,8 @@ async function main() {
     .insert({
       tenant_id: tenantId,
       event_id: event.id,
-      intro_text: "We'd love to know if you can join us — it takes less than a minute.",
-      confirmation_text: 'Thank you — we look forward to seeing you there.',
+      intro_text: "We'd love to know if you can join us - it takes less than a minute.",
+      confirmation_text: 'Thank you - we look forward to seeing you there.',
       is_published: true,
       published_at: new Date().toISOString(),
     })

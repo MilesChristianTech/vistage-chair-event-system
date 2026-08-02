@@ -149,7 +149,7 @@ export default async function DashboardPage() {
               <div>
                 <h2 className="text-base font-semibold text-navy-800 mb-3">Next actions</h2>
                 {allNextActions.length === 0 ? (
-                  <div className="card p-5 text-sm text-navy-500">Nothing urgent right now — you’re caught up.</div>
+                  <div className="card p-5 text-sm text-navy-500">Nothing urgent right now - you’re caught up.</div>
                 ) : (
                   <div className="card divide-y divide-navy-100 overflow-hidden">
                     {allNextActions.slice(0, 8).map((action, i) => (

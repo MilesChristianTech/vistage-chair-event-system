@@ -22,7 +22,7 @@ export interface CreateSendJobResult {
   jobId?: string;
 }
 
-/** Which invitations are eligible for a given message type — Part 7.7,
+/** Which invitations are eligible for a given message type - Part 7.7,
  * "add-on sends only go to the newly added, never re-sending to those
  * already invited." Parameterized on the Supabase client so it works both
  * from a Host's authenticated session and from the service-role client used
@@ -61,7 +61,7 @@ export async function getRecipientCandidates(
   return data ?? [];
 }
 
-/** Whether a job of this type for this event is already running or paused —
+/** Whether a job of this type for this event is already running or paused -
  * without this check, a second job would independently re-target the same
  * not-yet-sent recipients as the first, risking the same message going out
  * to the same person twice. */
@@ -76,7 +76,7 @@ export async function getActiveJobForType(supabase: SupabaseClient<Database>, ev
   return data;
 }
 
-/** The actual job-creation pipeline — resolve candidates, freeze merge
+/** The actual job-creation pipeline - resolve candidates, freeze merge
  * fields per recipient, build the send schedule, write send_jobs +
  * send_job_recipients. Shared by the Host's manual "Send" button
  * (session-scoped client, createdBy = the Host) and the auto-scheduling
@@ -117,7 +117,7 @@ export async function createSendJobCore(
   // PREVIEW_MODE: compress real pacing (minutes-to-days) down to a handful
   // of seconds so clicking "Send" is actually watchable in a demo, instead
   // of looking stalled for the length of a real send. Never applies outside
-  // a preview session — see lib/preview/simulate-worker.ts.
+  // a preview session - see lib/preview/simulate-worker.ts.
   const spanMs =
     process.env.PREVIEW_MODE === 'true'
       ? Math.min(20_000, Math.max(4_000, candidates.length * 1_500))

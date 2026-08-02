@@ -21,7 +21,7 @@ export default function MailboxCard({ mailbox }: { mailbox: Mailbox }) {
   const statusView = {
     connected: { dot: 'bg-success', text: `Connected as ${mailbox.connected_email}` },
     needs_reconnect: { dot: 'bg-warn', text: 'Needs reconnecting' },
-    throttled: { dot: 'bg-warn', text: 'Temporarily throttled by Microsoft — will recover automatically' },
+    throttled: { dot: 'bg-warn', text: 'Temporarily throttled by Microsoft - will recover automatically' },
   }[mailbox.status as 'connected' | 'needs_reconnect' | 'throttled'] ?? { dot: 'bg-navy-300', text: mailbox.status };
 
   return (

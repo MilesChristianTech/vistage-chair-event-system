@@ -40,7 +40,7 @@ export interface CustomFieldDefinition {
 }
 
 // Part request: "unlimited import columns" / a basic Excel-CRM classifier
-// system — a Host can define their own field on the fly (from the contact
+// system - a Host can define their own field on the fly (from the contact
 // form or the import wizard) rather than being limited to the fixed
 // columns. Reuses an existing definition with the same key if the label
 // normalizes to one already in use.
@@ -74,7 +74,7 @@ export async function createCustomFieldDefinitionAction(label: string): Promise<
 }
 
 // Part 4.4 / 6.1: editing a person is always free, immediate, and has no
-// side effects — it never triggers a send, never touches history.
+// side effects - it never triggers a send, never touches history.
 export async function createPersonAction(formData: FormData): Promise<ActionResult> {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
@@ -146,7 +146,7 @@ export async function updatePersonAction(personId: string, formData: FormData): 
 // Part 3.2 / 4.3: mark inactive rather than delete, so historical events
 // keep their integrity. Hard delete remains possible but is a separate,
 // explicitly gated action (see deletePersonAction below).
-// Thin wrappers matching useFormState's (prevState, formData) signature —
+// Thin wrappers matching useFormState's (prevState, formData) signature -
 // bind the id with .bind(null, id) to get a compatible action reference.
 export async function createPersonFormAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   const result = await createPersonAction(formData);
@@ -355,7 +355,7 @@ export async function commitImportAction(params: {
     }
 
     if (dup && dedupeChoice === 'update') {
-      // Merge rather than overwrite custom_fields — this import row only
+      // Merge rather than overwrite custom_fields - this import row only
       // carries whatever columns were mapped this time, and shouldn't wipe
       // out other custom field values already on the existing record.
       let updatePayload = payload;

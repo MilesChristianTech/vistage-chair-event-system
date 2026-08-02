@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { addPersonNoteAction } from './actions';
 
 /** Lets a Host jot a note on someone right from the Contacts list, without
- * navigating to their full profile — the detail page's Notes panel remains
+ * navigating to their full profile - the detail page's Notes panel remains
  * the place to read/manage the full history. */
 export default function QuickNoteButton({ personId }: { personId: string }) {
   const router = useRouter();

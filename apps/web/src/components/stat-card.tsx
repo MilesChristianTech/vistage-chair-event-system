@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import CountUp from './count-up';
 
-// `icon` is a rendered ReactNode, not a component reference — component
+// `icon` is a rendered ReactNode, not a component reference - component
 // references (functions) can't cross the Server -> Client Component
 // boundary, only already-rendered elements/nodes can.
 export default function StatCard({
