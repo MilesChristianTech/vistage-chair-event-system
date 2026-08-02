@@ -71,19 +71,32 @@ export default function FormBuilderClient({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(questions);
-  // `questions` only seeds state on mount - router.refresh() re-fetches it
-  // server-side after every add/remove/reorder, but without this the local
-  // copy never picks up the new prop, so changes only "appear" on a full
-  // page reload (which remounts the component from scratch).
-  useEffect(() => {
-    setItems(questions);
-  }, [questions]);
   const [introText, setIntroText] = useState(form.intro_text ?? '');
   const [confirmationText, setConfirmationText] = useState(form.confirmation_text ?? '');
   const [themeLogoUrl, setThemeLogoUrl] = useState(form.theme?.logoUrl ?? '');
   const [themeHeaderImageUrl, setThemeHeaderImageUrl] = useState(form.theme?.headerImageUrl ?? '');
   const [themePrimaryColor, setThemePrimaryColor] = useState(form.theme?.primaryColor ?? '');
   const [themeAccentColor, setThemeAccentColor] = useState(form.theme?.accentColor ?? '');
+  // Every one of these only seeds state on mount - router.refresh() re-fetches
+  // the server data after any save (on this section or any other), but
+  // without resyncing, each field's local copy keeps whatever it had in
+  // memory. That's not just a display bug: clicking that field's own Save
+  // button afterward re-submits the stale in-memory value and overwrites
+  // whatever is actually current in the database - exactly what happened
+  // with the branding images and intro/confirmation text.
+  useEffect(() => {
+    setItems(questions);
+  }, [questions]);
+  useEffect(() => {
+    setIntroText(form.intro_text ?? '');
+    setConfirmationText(form.confirmation_text ?? '');
+  }, [form.intro_text, form.confirmation_text]);
+  useEffect(() => {
+    setThemeLogoUrl(form.theme?.logoUrl ?? '');
+    setThemeHeaderImageUrl(form.theme?.headerImageUrl ?? '');
+    setThemePrimaryColor(form.theme?.primaryColor ?? '');
+    setThemeAccentColor(form.theme?.accentColor ?? '');
+  }, [form.theme]);
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
