@@ -39,14 +39,12 @@ export default async function PublicRsvpPage({
       <div className="relative max-w-xl mx-auto">
         <div className="rounded-xl p-[1px] bg-gradient-to-b from-white/25 via-white/10 to-transparent shadow-glow-navy">
           <div className="rounded-[11px] bg-white overflow-hidden">
-            {branding.headerImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={branding.headerImageUrl} alt="" className="w-full h-32 object-cover" />
-            ) : null}
             <div className="p-8">
               {branding.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={branding.logoUrl} alt="" className="h-12 max-w-[200px] object-contain mb-5" />
+                <div className="flex justify-center mb-5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={branding.logoUrl} alt="" className="max-h-20 max-w-full object-contain" />
+                </div>
               ) : null}
               <p
                 className="text-xs uppercase tracking-wide mb-1"

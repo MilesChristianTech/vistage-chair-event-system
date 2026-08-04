@@ -367,7 +367,7 @@ export function buildSeedData(): Record<string, any[]> {
       variant_threshold: 60,
       variant_count_min: 5,
       variant_count_max: 8,
-      branding: { logoUrl: null, headerImageUrl: null, accentColor: '#b08d57', primaryColor: '#0f1f3d' },
+      branding: { logoUrl: null, accentColor: '#b08d57', primaryColor: '#0f1f3d' },
       host_display_name: 'Cindy Smith',
       host_signature: 'Warmly,\nCindy',
       updated_at: now(),

@@ -32,7 +32,6 @@ export async function updateBrandingAction(_prevState: ActionResult, formData: F
 
   const branding = {
     logoUrl: String(formData.get('logo_url') || '').trim() || null,
-    headerImageUrl: String(formData.get('header_image_url') || '').trim() || null,
     accentColor: String(formData.get('accent_color') || '#b08d57'),
     primaryColor: String(formData.get('primary_color') || '#0f1f3d'),
   };

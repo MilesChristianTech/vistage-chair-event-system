@@ -35,7 +35,6 @@ interface FormQuestion {
 
 interface FormTheme {
   logoUrl?: string;
-  headerImageUrl?: string;
   primaryColor?: string;
   accentColor?: string;
 }
@@ -74,7 +73,6 @@ export default function FormBuilderClient({
   const [introText, setIntroText] = useState(form.intro_text ?? '');
   const [confirmationText, setConfirmationText] = useState(form.confirmation_text ?? '');
   const [themeLogoUrl, setThemeLogoUrl] = useState(form.theme?.logoUrl ?? '');
-  const [themeHeaderImageUrl, setThemeHeaderImageUrl] = useState(form.theme?.headerImageUrl ?? '');
   const [themePrimaryColor, setThemePrimaryColor] = useState(form.theme?.primaryColor ?? '');
   const [themeAccentColor, setThemeAccentColor] = useState(form.theme?.accentColor ?? '');
   // Every one of these only seeds state on mount - router.refresh() re-fetches
@@ -93,7 +91,6 @@ export default function FormBuilderClient({
   }, [form.intro_text, form.confirmation_text]);
   useEffect(() => {
     setThemeLogoUrl(form.theme?.logoUrl ?? '');
-    setThemeHeaderImageUrl(form.theme?.headerImageUrl ?? '');
     setThemePrimaryColor(form.theme?.primaryColor ?? '');
     setThemeAccentColor(form.theme?.accentColor ?? '');
   }, [form.theme]);
@@ -159,7 +156,6 @@ export default function FormBuilderClient({
       const result = await updateFormMetaAction(form.id, {
         theme: {
           logoUrl: themeLogoUrl || undefined,
-          headerImageUrl: themeHeaderImageUrl || undefined,
           primaryColor: themePrimaryColor || undefined,
           accentColor: themeAccentColor || undefined,
         },
@@ -228,14 +224,7 @@ export default function FormBuilderClient({
           </p>
           <div className="mb-3">
             <ImageUploadField name="theme_logo_url" label="Logo" value={themeLogoUrl} onUploaded={setThemeLogoUrl} />
-          </div>
-          <div className="mb-3">
-            <ImageUploadField
-              name="theme_header_image_url"
-              label="Header image"
-              value={themeHeaderImageUrl}
-              onUploaded={setThemeHeaderImageUrl}
-            />
+            <p className="field-hint -mt-1">Shown centered at the top of this event’s form, sized to fit automatically.</p>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>

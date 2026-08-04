@@ -7,7 +7,6 @@ import ImageUploadField from '@/components/image-upload-field';
 
 interface Branding {
   logoUrl?: string;
-  headerImageUrl?: string;
   accentColor?: string;
   primaryColor?: string;
 }
@@ -28,7 +27,7 @@ export default function BrandingForm({ initial }: { initial: Branding | null }) 
   return (
     <form action={formAction} className="space-y-3 max-w-md">
       <ImageUploadField name="logo_url" label="Logo" value={initial?.logoUrl ?? ''} />
-      <ImageUploadField name="header_image_url" label="Header image" value={initial?.headerImageUrl ?? ''} />
+      <p className="field-hint -mt-2">Shown centered at the top of your RSVP form, sized to fit automatically.</p>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="field-label">Primary color</label>

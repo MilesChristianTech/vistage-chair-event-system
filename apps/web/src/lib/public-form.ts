@@ -13,7 +13,6 @@ import type { Json } from '@/lib/database.types';
 
 export interface FormBranding {
   logoUrl: string | null;
-  headerImageUrl: string | null;
   primaryColor: string | null;
   accentColor: string | null;
 }
@@ -67,7 +66,6 @@ export async function getPublicFormData(formToken: string, invitationToken?: str
   const eventTheme = (form.theme as Record<string, unknown>) ?? {};
   const branding: FormBranding = {
     logoUrl: (eventTheme.logoUrl as string) ?? (tenantBranding.logoUrl as string) ?? null,
-    headerImageUrl: (eventTheme.headerImageUrl as string) ?? (tenantBranding.headerImageUrl as string) ?? null,
     primaryColor: (eventTheme.primaryColor as string) ?? (tenantBranding.primaryColor as string) ?? null,
     accentColor: (eventTheme.accentColor as string) ?? (tenantBranding.accentColor as string) ?? null,
   };
