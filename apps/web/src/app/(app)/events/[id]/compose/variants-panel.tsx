@@ -50,8 +50,13 @@ export default function VariantsPanel({
 
   function saveEdit() {
     if (!editingId) return;
+    setError(null);
     startTransition(async () => {
-      await updateVariantAction(editingId, draft);
+      const result = await updateVariantAction(editingId, draft);
+      if (!result.ok) {
+        setError(result.error || 'Could not save that variant.');
+        return;
+      }
       setEditingId(null);
       router.refresh();
     });

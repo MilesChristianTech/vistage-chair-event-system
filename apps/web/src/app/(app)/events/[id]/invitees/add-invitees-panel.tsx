@@ -11,6 +11,7 @@ export default function AddInviteesPanel({ eventId }: { eventId: string }) {
   const [selected, setSelected] = useState<Map<string, PersonSearchResult>>(new Map());
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   function runSearch(q: string) {
     setQuery(q);
@@ -32,16 +33,19 @@ export default function AddInviteesPanel({ eventId }: { eventId: string }) {
   async function addSelected() {
     const ids = Array.from(selected.keys());
     if (ids.length === 0) return;
+    setError(null);
     const result = await addInviteesAction(eventId, ids);
-    if (result.ok) {
-      setMessage(
-        `Added ${result.addedCount}.${result.skippedCount ? ` (${result.skippedCount} already invited, skipped.)` : ''}`
-      );
-      setSelected(new Map());
-      setResults([]);
-      setQuery('');
-      router.refresh();
+    if (!result.ok) {
+      setError(result.error || 'Could not add those invitees.');
+      return;
     }
+    setMessage(
+      `Added ${result.addedCount}.${result.skippedCount ? ` (${result.skippedCount} already invited, skipped.)` : ''}`
+    );
+    setSelected(new Map());
+    setResults([]);
+    setQuery('');
+    router.refresh();
   }
 
   return (
@@ -82,6 +86,7 @@ export default function AddInviteesPanel({ eventId }: { eventId: string }) {
       ) : null}
 
       {message ? <p className="text-sm text-success mb-3">{message}</p> : null}
+      {error ? <p className="text-sm text-danger mb-3">{error}</p> : null}
 
       <button className="btn-primary" disabled={selected.size === 0} onClick={addSelected}>
         Add {selected.size > 0 ? selected.size : ''} to this event

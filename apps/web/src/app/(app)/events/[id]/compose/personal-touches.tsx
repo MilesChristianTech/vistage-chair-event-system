@@ -45,8 +45,13 @@ function TouchRow({ eventId, invitation }: { eventId: string; invitation: Invite
   const [error, setError] = useState<string | null>(null);
 
   function save() {
+    setError(null);
     startTransition(async () => {
-      await saveHandwrittenTouchAction(invitation.id, note);
+      const result = await saveHandwrittenTouchAction(invitation.id, note);
+      if (!result.ok) {
+        setError(result.error || 'Could not save that note.');
+        return;
+      }
       setDirty(false);
       router.refresh();
     });

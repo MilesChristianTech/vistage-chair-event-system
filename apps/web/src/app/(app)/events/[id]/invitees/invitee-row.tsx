@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation';
 import { updateInvitationAction, removeInviteeAction } from '../../actions';
 
 const SEGMENTS = ['priority', 'member', 'prospect', 'guest', 'referral', 'other'];
+const RSVP_STATUSES = ['no_response', 'yes', 'maybe', 'no', 'waitlisted', 'cancelled'];
+const RSVP_LABELS: Record<string, string> = {
+  no_response: 'No response',
+  yes: 'Yes',
+  maybe: 'Maybe',
+  no: 'No',
+  waitlisted: 'Waitlisted',
+  cancelled: 'Cancelled',
+};
 
 export interface InviteeRowData {
   id: string;
@@ -35,7 +44,12 @@ export default function InviteeRow({ eventId, invitee }: { eventId: string; invi
           className="input py-1"
           defaultValue={invitee.audience_segment}
           onChange={async (e) => {
-            await updateInvitationAction(invitee.id, { audience_segment: e.target.value });
+            setError(null);
+            const result = await updateInvitationAction(invitee.id, { audience_segment: e.target.value });
+            if (!result.ok) {
+              setError(result.error || 'Could not update segment.');
+              return;
+            }
             router.refresh();
           }}
         >
@@ -50,7 +64,25 @@ export default function InviteeRow({ eventId, invitee }: { eventId: string; invi
         <StatusBadge status={invitee.invite_status} />
       </td>
       <td className="px-4 py-2.5">
-        <RsvpBadge status={invitee.rsvp_status} />
+        <select
+          className="input py-1"
+          defaultValue={invitee.rsvp_status}
+          onChange={async (e) => {
+            setError(null);
+            const result = await updateInvitationAction(invitee.id, { rsvp_status: e.target.value });
+            if (!result.ok) {
+              setError(result.error || 'Could not update RSVP status.');
+              return;
+            }
+            router.refresh();
+          }}
+        >
+          {RSVP_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {RSVP_LABELS[s]}
+            </option>
+          ))}
+        </select>
       </td>
       <td className="px-4 py-2.5 text-right">
         <button
@@ -83,24 +115,4 @@ function StatusBadge({ status }: { status: string }) {
     withdrawn: 'badge-neutral',
   };
   return <span className={map[status] ?? 'badge-neutral'}>{status}</span>;
-}
-
-function RsvpBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    no_response: 'badge-neutral',
-    yes: 'badge-success',
-    no: 'badge-neutral',
-    maybe: 'badge-warn',
-    waitlisted: 'badge-warn',
-    cancelled: 'badge-danger',
-  };
-  const labels: Record<string, string> = {
-    no_response: 'No response',
-    yes: 'Yes',
-    no: 'No',
-    maybe: 'Maybe',
-    waitlisted: 'Waitlisted',
-    cancelled: 'Cancelled',
-  };
-  return <span className={map[status] ?? 'badge-neutral'}>{labels[status] ?? status}</span>;
 }

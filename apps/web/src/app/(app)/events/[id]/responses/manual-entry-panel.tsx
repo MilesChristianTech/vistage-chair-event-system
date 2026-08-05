@@ -18,6 +18,7 @@ export default function ManualEntryPanel({
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="card p-5 max-w-lg">
@@ -60,18 +61,23 @@ export default function ManualEntryPanel({
       </div>
 
       {saved ? <p className="text-sm text-success mb-3">Recorded.</p> : null}
+      {error ? <p className="text-sm text-danger mb-3">{error}</p> : null}
 
       <button
         className="btn-primary"
         disabled={!invitationId || isSaving}
         onClick={async () => {
           setIsSaving(true);
+          setError(null);
+          setSaved(false);
           const result = await recordManualResponseAction({ eventId, invitationId, rsvpStatus, guestCount, note });
           setIsSaving(false);
-          if (result.ok) {
-            setSaved(true);
-            router.refresh();
+          if (!result.ok) {
+            setError(result.error || 'Could not save that response.');
+            return;
           }
+          setSaved(true);
+          router.refresh();
         }}
       >
         Save response

@@ -35,19 +35,36 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     return NextResponse.json({ error: 'Malformed submission.' }, { status: 400 });
   }
 
-  const { answers, invitationId, submittedName, submittedEmail } = body as {
+  const { answers: rawAnswers, invitationId, submittedName, submittedEmail } = body as {
     answers: Record<string, unknown>;
     invitationId?: string;
     submittedName?: string;
     submittedEmail?: string;
   };
+  const answers: Record<string, unknown> = rawAnswers && typeof rawAnswers === 'object' ? rawAnswers : {};
 
   const { data: questions } = await supabase
     .from('form_questions')
-    .select('id, question_type')
+    .select('id, question_type, label, is_required')
     .eq('form_id', form.id);
 
   const typeById = new Map((questions ?? []).map((q) => [q.id, q.question_type]));
+
+  // The client already enforces `required` via HTML attributes and its own
+  // attendance check, but this endpoint is a public, unauthenticated JSON
+  // API - anyone can POST to it directly, bypassing the client entirely. Mirror
+  // the same required-question contract here so that path can't produce
+  // incomplete responses that silently get stored and applied to an invitation.
+  for (const q of questions ?? []) {
+    if (!q.is_required) continue;
+    const value = answers[q.id];
+    if (value === undefined || value === null || String(value).trim() === '') {
+      return NextResponse.json({ error: `Please answer "${q.label}".` }, { status: 400 });
+    }
+  }
+  if (!invitationId && (!submittedName?.trim() || !submittedEmail?.trim())) {
+    return NextResponse.json({ error: 'Please provide your name and email.' }, { status: 400 });
+  }
 
   // Resolve which invitation this belongs to, without ever touching the
   // raw payload we're about to store.
@@ -118,6 +135,27 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       }
       if (type === 'guest_names') patch.guest_names = String(value ?? '');
       if (type === 'dietary_accessibility') patch.dietary_accessibility_notes = String(value ?? '');
+    }
+
+    // "Capacity is used to compute remaining seats, drive waitlist behavior,
+    // and warn on overage - but never to auto-decline anyone" (build spec
+    // 3.3) - a 'yes' that would push the event over capacity lands as
+    // 'waitlisted' instead, never silently dropped or turned into a 'no'.
+    if (patch.rsvp_status === 'yes') {
+      const { data: event } = await supabase.from('events').select('capacity').eq('id', form.event_id).maybeSingle();
+      if (event?.capacity != null) {
+        const { data: others } = await supabase
+          .from('invitations')
+          .select('guest_count')
+          .eq('event_id', form.event_id)
+          .eq('rsvp_status', 'yes')
+          .neq('id', resolvedInvitationId);
+        const othersHeadcount = (others ?? []).reduce((sum, r) => sum + 1 + (r.guest_count || 0), 0);
+        const thisHeadcount = 1 + (typeof patch.guest_count === 'number' ? patch.guest_count : 0);
+        if (othersHeadcount + thisHeadcount > event.capacity) {
+          patch.rsvp_status = 'waitlisted';
+        }
+      }
     }
 
     if (Object.keys(patch).length > 0) {

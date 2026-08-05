@@ -58,10 +58,14 @@ export async function getEventMetrics(
   const attended = rows.filter((r) => r.attendance_status === 'attended').length;
   const attendanceYield = invited > 0 ? attended / invited : null;
 
-  const { count: exceptions } = await supabase
-    .from('form_responses')
-    .select('id', { count: 'exact', head: true })
-    .eq('match_status', 'needs_review');
+  const { data: form } = await supabase.from('forms').select('id').eq('event_id', eventId).maybeSingle();
+  const { count: exceptions } = form
+    ? await supabase
+        .from('form_responses')
+        .select('id', { count: 'exact', head: true })
+        .eq('form_id', form.id)
+        .eq('match_status', 'needs_review')
+    : { count: 0 };
 
   return {
     invited,

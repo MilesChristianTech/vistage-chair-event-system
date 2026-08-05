@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { useFormState, useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import ConfirmAction from '@/components/confirm-action';
 import { addPersonNoteFormAction, deletePersonNoteAction, type ActionResult } from '../actions';
 
 function AddButton() {
@@ -24,17 +24,6 @@ export default function NotesPanel({
   const router = useRouter();
   const action = addPersonNoteFormAction.bind(null, personId);
   const [state, formAction] = useFormState<ActionResult, FormData>(action, { ok: true });
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
-
-  function handleDelete(noteId: string) {
-    setDeletingId(noteId);
-    startTransition(async () => {
-      await deletePersonNoteAction(noteId, personId);
-      setDeletingId(null);
-      router.refresh();
-    });
-  }
 
   return (
     <div className="card p-5">
@@ -67,13 +56,19 @@ export default function NotesPanel({
                   {new Date(n.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
-              <button
-                className="btn-ghost text-xs text-danger shrink-0"
-                disabled={deletingId === n.id}
-                onClick={() => handleDelete(n.id)}
-              >
-                {deletingId === n.id ? 'Removing…' : 'Delete'}
-              </button>
+              <div className="shrink-0">
+                <ConfirmAction
+                  triggerLabel="Delete"
+                  triggerClassName="btn-ghost text-xs text-danger"
+                  consequence="This permanently deletes this note. This cannot be undone."
+                  confirmLabel="Delete"
+                  onConfirm={async () => {
+                    const result = await deletePersonNoteAction(n.id, personId);
+                    router.refresh();
+                    return result;
+                  }}
+                />
+              </div>
             </li>
           ))}
         </ul>

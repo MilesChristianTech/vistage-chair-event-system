@@ -49,7 +49,8 @@ export default function RsvpFormClient({
       });
 
       if (!response.ok) {
-        setError('Something went wrong submitting your response. Please try again.');
+        const body = await response.json().catch(() => null);
+        setError(body?.error || 'Something went wrong submitting your response. Please try again.');
         return;
       }
 

@@ -14,6 +14,7 @@ export default function ExceptionRow({
   const router = useRouter();
   const [selected, setSelected] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="card p-4">
@@ -38,13 +39,20 @@ export default function ExceptionRow({
           disabled={!selected || isSaving}
           onClick={async () => {
             setIsSaving(true);
-            await resolveExceptionAction(response.id, selected);
+            setError(null);
+            const result = await resolveExceptionAction(response.id, selected);
+            if (!result.ok) {
+              setError(result.error || 'Could not match this response.');
+              setIsSaving(false);
+              return;
+            }
             router.refresh();
           }}
         >
           Match
         </button>
       </div>
+      {error ? <p className="text-xs text-danger mt-2">{error}</p> : null}
     </div>
   );
 }

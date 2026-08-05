@@ -42,6 +42,7 @@ export default async function InviteesPage({ params }: { params: { id: string } 
             </div>
           ) : (
             <div className="card overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-navy-50 text-navy-600 text-xs uppercase tracking-wide">
                   <tr>
@@ -59,6 +60,7 @@ export default async function InviteesPage({ params }: { params: { id: string } 
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

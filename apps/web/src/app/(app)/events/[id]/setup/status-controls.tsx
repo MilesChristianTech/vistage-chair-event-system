@@ -17,6 +17,7 @@ export default function EventStatusControls({ event }: { event: { id: string; st
   const router = useRouter();
   const [isDuplicating, startDuplicate] = useTransition();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   return (
     <div className="card p-4 space-y-4">
@@ -26,7 +27,12 @@ export default function EventStatusControls({ event }: { event: { id: string; st
           className="input"
           defaultValue={event.status}
           onChange={async (e) => {
-            await updateEventStatusAction(event.id, e.target.value);
+            setStatusError(null);
+            const result = await updateEventStatusAction(event.id, e.target.value);
+            if (result && !result.ok) {
+              setStatusError(result.error || 'Could not update status.');
+              return;
+            }
             router.refresh();
           }}
         >
@@ -37,6 +43,7 @@ export default function EventStatusControls({ event }: { event: { id: string; st
           ))}
         </select>
         <p className="field-hint">Status shapes what the app shows and suggests - it never blocks you from editing.</p>
+        {statusError ? <p className="text-sm text-danger mt-2">{statusError}</p> : null}
       </div>
 
       <div className="pt-3 border-t border-navy-100">

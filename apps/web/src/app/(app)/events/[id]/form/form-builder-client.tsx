@@ -193,7 +193,13 @@ export default function FormBuilderClient({
               <SortableContext items={items.map((q) => q.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
                   {items.map((q) => (
-                    <QuestionCard key={q.id} question={q} onRemove={() => removeQuestion(q.id)} onSaved={() => router.refresh()} />
+                    <QuestionCard
+                      key={q.id}
+                      question={q}
+                      onRemove={() => removeQuestion(q.id)}
+                      onSaved={() => router.refresh()}
+                      onError={setError}
+                    />
                   ))}
                 </div>
               </SortableContext>
@@ -325,10 +331,12 @@ function QuestionCard({
   question,
   onRemove,
   onSaved,
+  onError,
 }: {
   question: FormQuestion;
   onRemove: () => void;
   onSaved: () => void;
+  onError: (message: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id });
   const [editing, setEditing] = useState(false);
@@ -337,16 +345,28 @@ function QuestionCard({
   const [isRequired, setIsRequired] = useState(question.is_required);
   const [choices, setChoices] = useState<string[]>(question.options?.choices ?? []);
 
+  useEffect(() => {
+    setLabel(question.label);
+    setHelpText(question.help_text ?? '');
+    setIsRequired(question.is_required);
+    setChoices(question.options?.choices ?? []);
+  }, [question]);
+
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   const isMultipleChoice = question.question_type === 'multiple_choice';
 
   async function save() {
-    await updateQuestionAction(question.id, {
+    onError(null);
+    const result = await updateQuestionAction(question.id, {
       label,
       help_text: helpText || null,
       is_required: isRequired,
       ...(isMultipleChoice ? { options: { choices: choices.filter((c) => c.trim()) } } : {}),
     });
+    if (!result.ok) {
+      onError(result.error || 'Could not save that question.');
+      return;
+    }
     setEditing(false);
     onSaved();
   }
