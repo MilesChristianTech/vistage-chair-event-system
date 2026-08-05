@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { requireCurrentUser, getMailboxConnection } from '@/lib/tenant';
+import { requireCurrentUser, getMailboxConnection, getTenantSettings } from '@/lib/tenant';
 import type { PaceProfile } from '@/lib/pacing';
 import {
   getRecipientCandidates,
@@ -11,6 +11,12 @@ import {
   type SendJobType,
   type CreateSendJobResult,
 } from '@/lib/send-job-core';
+import { resolveGreetingName, resolveMergeFields, plainTextToHtml, appendCalendarLinkIfRelevant } from '@/lib/merge-fields';
+import { getFormPreviewData, type PublicFormData } from '@/lib/public-form';
+
+export async function getFormPreviewAction(eventId: string): Promise<PublicFormData | null> {
+  return getFormPreviewData(eventId);
+}
 
 export interface ActionResult {
   ok: boolean;
@@ -210,4 +216,90 @@ export async function cancelSendJobAction(jobId: string): Promise<ActionResult> 
   const { error } = await supabase.from('send_jobs').update({ status: 'cancelled' }).eq('id', jobId);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
+}
+
+export interface MessagePreview {
+  subject: string;
+  htmlBody: string;
+  recipientName: string;
+  recipientEmail: string | null;
+  fromEmail: string | null;
+  isSampleRecipient: boolean;
+  attachments: { name: string; url: string }[];
+}
+
+/** Exactly the same resolution pipeline createSendJobCore uses at actual
+ * send time (same merge-field context, same calendar-link append, same
+ * HTML conversion) - so what a Host previews here is a genuine replica of
+ * what a recipient will receive, not an approximation. Uses a real,
+ * currently-eligible recipient when one exists so names/links are real;
+ * falls back to a generic placeholder person if the list is empty (nobody
+ * to preview against yet shouldn't block seeing how the message reads). */
+export async function getMessagePreviewAction(eventId: string, jobType: SendJobType): Promise<MessagePreview | null> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const [{ data: event }, { data: message }, { data: form }, tenantSettings, mailbox, candidates] = await Promise.all([
+    supabase.from('events').select('public_title').eq('id', eventId).single(),
+    supabase.from('messages').select('id, subject, body, attachment_urls').eq('event_id', eventId).eq('message_type', jobType).maybeSingle(),
+    supabase.from('forms').select('public_token').eq('event_id', eventId).single(),
+    getTenantSettings(appUser.tenant_id),
+    getMailboxConnection(appUser.tenant_id),
+    getRecipientCandidates(supabase, eventId, jobType),
+  ]);
+
+  if (!message?.body) return null;
+
+  let sampleInvitation: {
+    id: string;
+    public_token: string;
+    personalization_note: string | null;
+    people:
+      | { first_name: string; last_name: string; preferred_name: string | null; email: string | null }
+      | { first_name: string; last_name: string; preferred_name: string | null; email: string | null }[]
+      | null;
+  } | null = null;
+
+  const firstCandidate = candidates[0];
+  if (firstCandidate) {
+    const { data } = await supabase
+      .from('invitations')
+      .select('id, public_token, personalization_note, people(first_name, last_name, preferred_name, email)')
+      .eq('id', firstCandidate.id)
+      .single();
+    sampleInvitation = data;
+  }
+
+  const person = sampleInvitation
+    ? Array.isArray(sampleInvitation.people)
+      ? sampleInvitation.people[0]
+      : sampleInvitation.people
+    : null;
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const formLink =
+    form && sampleInvitation ? `${appUrl}/r/${form.public_token}?i=${sampleInvitation.public_token}` : form ? `${appUrl}/r/${form.public_token}` : '';
+  const calendarLink = form ? `${appUrl}/api/public/calendar/${form.public_token}` : null;
+
+  const mergeCtx = {
+    greetingName: person ? resolveGreetingName({ preferredName: person.preferred_name, firstName: person.first_name }) : 'Alex',
+    eventPublicTitle: event?.public_title ?? '',
+    formLink,
+    calendarLink: calendarLink ?? '',
+    hostDisplayName: tenantSettings?.host_display_name ?? '',
+    hostSignature: tenantSettings?.host_signature ?? tenantSettings?.host_display_name ?? '',
+    personalTouch: jobType === 'invitation' ? sampleInvitation?.personalization_note : null,
+  };
+
+  const resolvedBody = appendCalendarLinkIfRelevant(resolveMergeFields(message.body, mergeCtx), jobType, calendarLink);
+
+  return {
+    subject: resolveMergeFields(message.subject ?? '', mergeCtx),
+    htmlBody: plainTextToHtml(resolvedBody),
+    recipientName: person ? `${person.first_name} ${person.last_name}` : 'Alex Morgan',
+    recipientEmail: person?.email ?? (sampleInvitation ? null : 'alex.morgan@example.com'),
+    fromEmail: mailbox?.connected_email ?? null,
+    isSampleRecipient: !sampleInvitation,
+    attachments: (message.attachment_urls as { name: string; url: string }[] | null) ?? [],
+  };
 }

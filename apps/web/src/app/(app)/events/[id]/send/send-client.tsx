@@ -13,6 +13,7 @@ import {
   type SendJobType,
 } from './actions';
 import JobProgress, { type JobSummary } from './job-progress';
+import MessagePreviewModal from './message-preview-modal';
 
 const JOB_LABELS: Record<string, string> = {
   invitation: 'Initial invitation',
@@ -43,6 +44,7 @@ export default function SendClient({
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState<JobSummary[]>(initialJobs);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -121,6 +123,12 @@ export default function SendClient({
                 </div>
               )}
 
+              <div className="mb-4">
+                <button type="button" className="btn-secondary" onClick={() => setShowPreview(true)}>
+                  Preview
+                </button>
+              </div>
+
               {preflight.blockers.length === 0 ? (
                 <>
                   <div className="mb-4">
@@ -181,6 +189,15 @@ export default function SendClient({
           ))
         )}
       </div>
+
+      {showPreview ? (
+        <MessagePreviewModal
+          eventId={eventId}
+          jobType={selectedType}
+          jobLabel={JOB_LABELS[selectedType] ?? selectedType}
+          onClose={() => setShowPreview(false)}
+        />
+      ) : null}
     </div>
   );
 }

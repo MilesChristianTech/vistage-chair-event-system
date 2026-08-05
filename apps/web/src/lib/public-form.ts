@@ -1,6 +1,9 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createClient } from '@/lib/supabase/server';
+import { requireCurrentUser } from '@/lib/tenant';
 import { formatEventDateTime, formatDeadline } from '@/lib/datetime';
-import type { Json } from '@/lib/database.types';
+import type { Database, Json } from '@/lib/database.types';
 
 /**
  * Everything the public, unauthenticated hosted RSVP form needs, resolved
@@ -44,15 +47,12 @@ export interface PublicFormData {
   prefill: { firstName: string; lastName: string; email: string | null; invitationId: string } | null;
 }
 
-export async function getPublicFormData(formToken: string, invitationToken?: string | null): Promise<PublicFormData | null> {
-  const supabase = createServiceClient();
-
-  const { data: form } = await supabase.from('forms').select('*').eq('public_token', formToken).eq('is_published', true).maybeSingle();
-  if (!form) return null;
-
-  const { data: event } = await supabase.from('events').select('*').eq('id', form.event_id).maybeSingle();
-  if (!event) return null;
-
+async function buildFormData(
+  supabase: SupabaseClient<Database>,
+  form: Database['public']['Tables']['forms']['Row'],
+  event: Database['public']['Tables']['events']['Row'],
+  invitationToken?: string | null
+): Promise<PublicFormData> {
   const { data: tenantSettings } = await supabase
     .from('tenant_settings')
     .select('branding')
@@ -123,4 +123,34 @@ export async function getPublicFormData(formToken: string, invitationToken?: str
     },
     prefill,
   };
+}
+
+export async function getPublicFormData(formToken: string, invitationToken?: string | null): Promise<PublicFormData | null> {
+  const supabase = createServiceClient();
+
+  const { data: form } = await supabase.from('forms').select('*').eq('public_token', formToken).eq('is_published', true).maybeSingle();
+  if (!form) return null;
+
+  const { data: event } = await supabase.from('events').select('*').eq('id', form.event_id).maybeSingle();
+  if (!event) return null;
+
+  return buildFormData(supabase, form, event, invitationToken);
+}
+
+/** Lets a Host preview exactly what their public form looks like — same
+ * rendering as the real thing, sourced the same way — without requiring it
+ * to be published first, and without needing the public token. Scoped to
+ * the signed-in Host's own tenant via the session client (RLS), not the
+ * service-role client the real public page uses. */
+export async function getFormPreviewData(eventId: string): Promise<PublicFormData | null> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const { data: event } = await supabase.from('events').select('*').eq('id', eventId).eq('tenant_id', appUser.tenant_id).maybeSingle();
+  if (!event) return null;
+
+  const { data: form } = await supabase.from('forms').select('*').eq('event_id', eventId).maybeSingle();
+  if (!form) return null;
+
+  return buildFormData(supabase, form, event);
 }
