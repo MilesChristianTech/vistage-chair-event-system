@@ -138,10 +138,22 @@ export default function FormBuilderClient({
     });
   }
 
-  function saveMeta() {
+  function saveIntro() {
     setError(null);
     startTransition(async () => {
-      const result = await updateFormMetaAction(form.id, { intro_text: introText, confirmation_text: confirmationText });
+      const result = await updateFormMetaAction(form.id, { intro_text: introText });
+      if (!result.ok) {
+        setError(result.error || 'Could not save.');
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  function saveConfirmation() {
+    setError(null);
+    startTransition(async () => {
+      const result = await updateFormMetaAction(form.id, { confirmation_text: confirmationText });
       if (!result.ok) {
         setError(result.error || 'Could not save.');
         return;
@@ -184,44 +196,10 @@ export default function FormBuilderClient({
           </div>
         ) : null}
 
-        <div className="card p-5">
-          <h3>Questions</h3>
-          {items.length === 0 ? (
-            <p className="text-navy-400 text-sm">No questions yet - add some from the templates on the right.</p>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={items.map((q) => q.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2">
-                  {items.map((q) => (
-                    <QuestionCard
-                      key={q.id}
-                      question={q}
-                      onRemove={() => removeQuestion(q.id)}
-                      onSaved={() => router.refresh()}
-                      onError={setError}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-        </div>
-
-        <div className="card p-5">
-          <h3>Intro & confirmation text</h3>
-          <div className="mb-3">
-            <label className="field-label">Intro text (shown at the top of the form)</label>
-            <textarea className="input" rows={2} value={introText} onChange={(e) => setIntroText(e.target.value)} />
-          </div>
-          <div className="mb-3">
-            <label className="field-label">Confirmation screen (shown after submitting)</label>
-            <textarea className="input" rows={2} value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
-          </div>
-          <button className="btn-secondary" onClick={saveMeta} disabled={isPending}>
-            Save
-          </button>
-        </div>
-
+        {/* These four cards are ordered to match the actual public form
+            top-to-bottom (branding, then intro text, then questions, then
+            the post-submit confirmation screen last) so building the form
+            here mirrors seeing it there. */}
         <div className="card p-5">
           <h3>Branding for this event</h3>
           <p className="text-navy-500 text-sm mb-4">
@@ -254,6 +232,51 @@ export default function FormBuilderClient({
           </div>
           <button className="btn-secondary" onClick={saveTheme} disabled={isPending}>
             Save branding
+          </button>
+        </div>
+
+        <div className="card p-5">
+          <h3>Intro text</h3>
+          <p className="text-navy-500 text-sm mb-3">Shown at the top of the form, right below your branding.</p>
+          <div className="mb-3">
+            <textarea className="input" rows={2} value={introText} onChange={(e) => setIntroText(e.target.value)} />
+          </div>
+          <button className="btn-secondary" onClick={saveIntro} disabled={isPending}>
+            Save
+          </button>
+        </div>
+
+        <div className="card p-5">
+          <h3>Questions</h3>
+          {items.length === 0 ? (
+            <p className="text-navy-400 text-sm">No questions yet - add some from the templates on the right.</p>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={items.map((q) => q.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {items.map((q) => (
+                    <QuestionCard
+                      key={q.id}
+                      question={q}
+                      onRemove={() => removeQuestion(q.id)}
+                      onSaved={() => router.refresh()}
+                      onError={setError}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+
+        <div className="card p-5">
+          <h3>Confirmation screen</h3>
+          <p className="text-navy-500 text-sm mb-3">Shown after someone submits the form, replacing it entirely.</p>
+          <div className="mb-3">
+            <textarea className="input" rows={2} value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
+          </div>
+          <button className="btn-secondary" onClick={saveConfirmation} disabled={isPending}>
+            Save
           </button>
         </div>
       </div>
