@@ -77,6 +77,8 @@ export default async function PersonProfilePage({ params }: { params: { id: stri
         icon={<Avatar firstName={person.first_name} lastName={person.last_name} />}
         title={`${person.first_name} ${person.last_name}`}
         description={person.company ? `${person.title ? `${person.title} at ` : ''}${person.company}` : undefined}
+        backHref="/contacts"
+        backLabel="Contacts"
         actions={<PersonActions person={person} />}
       />
       <AppPageBody>

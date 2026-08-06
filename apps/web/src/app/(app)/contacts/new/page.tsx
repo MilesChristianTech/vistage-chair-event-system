@@ -14,7 +14,12 @@ export default async function NewContactPage() {
 
   return (
     <>
-      <AppPageHeader title="Add a person" description="They'll be available to invite to any event, right away." />
+      <AppPageHeader
+        title="Add a person"
+        description="They'll be available to invite to any event, right away."
+        backHref="/contacts"
+        backLabel="Contacts"
+      />
       <AppPageBody>
         <PersonForm
           action={createPersonFormAction}
