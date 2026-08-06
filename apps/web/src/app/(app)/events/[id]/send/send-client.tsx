@@ -5,15 +5,18 @@ import ConfirmAction from '@/components/confirm-action';
 import { getPaceRecommendations, formatEta, type PaceProfile } from '@/lib/pacing';
 import {
   getPreflightStatusAction,
+  getRecipientPreviewAction,
   createSendJobAction,
   pauseSendJobAction,
   resumeSendJobAction,
   cancelSendJobAction,
   type PreflightStatus,
+  type RecipientPreview,
   type SendJobType,
 } from './actions';
 import JobProgress, { type JobSummary } from './job-progress';
 import MessagePreviewModal from './message-preview-modal';
+import RecipientPicker from './recipient-picker';
 
 const JOB_LABELS: Record<string, string> = {
   invitation: 'Initial invitation',
@@ -45,37 +48,65 @@ export default function SendClient({
   const [jobs, setJobs] = useState<JobSummary[]>(initialJobs);
   const [createError, setCreateError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [recipients, setRecipients] = useState<RecipientPreview[]>([]);
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setLoading(true);
-    getPreflightStatusAction(eventId, selectedType)
-      .then((status) => {
+    setExcluded(new Set());
+    Promise.all([getPreflightStatusAction(eventId, selectedType), getRecipientPreviewAction(eventId, selectedType)])
+      .then(([status, recipientList]) => {
         setPreflight(status);
+        setRecipients(recipientList);
         const recs = getPaceRecommendations(status.recipientCount);
         setPace(recs.find((r) => r.isRecommended)?.profile ?? 'fastest');
       })
       .finally(() => setLoading(false));
   }, [eventId, selectedType]);
 
-  const recommendations = preflight ? getPaceRecommendations(preflight.recipientCount) : [];
+  const includedCount = recipients.length - excluded.size;
+  const recommendations = preflight ? getPaceRecommendations(includedCount) : [];
+
+  function toggleExclude(invitationId: string) {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      if (next.has(invitationId)) next.delete(invitationId);
+      else next.add(invitationId);
+      return next;
+    });
+  }
+
+  function toggleAllExcluded(exclude: boolean) {
+    setExcluded(exclude ? new Set(recipients.map((r) => r.invitationId)) : new Set());
+  }
 
   async function handleSend() {
     setCreateError(null);
-    const result = await createSendJobAction({ eventId, jobType: selectedType, paceProfile: pace });
+    const result = await createSendJobAction({
+      eventId,
+      jobType: selectedType,
+      paceProfile: pace,
+      excludeInvitationIds: Array.from(excluded),
+    });
     if (!result.ok) {
       setCreateError(result.error || 'Could not start the send.');
       return { ok: false, error: result.error };
     }
-    // Re-fetch preflight (recipient count now 0 for this type) and jobs list.
-    const status = await getPreflightStatusAction(eventId, selectedType);
+    // Re-fetch preflight/recipients (recipient count now 0 for this type) and jobs list.
+    const [status, recipientList] = await Promise.all([
+      getPreflightStatusAction(eventId, selectedType),
+      getRecipientPreviewAction(eventId, selectedType),
+    ]);
     setPreflight(status);
+    setRecipients(recipientList);
+    setExcluded(new Set());
     if (result.jobId) {
       setJobs((prev) => [
         {
           id: result.jobId!,
           job_type: selectedType,
           status: 'running',
-          total_recipients: preflight?.recipientCount ?? 0,
+          total_recipients: includedCount,
           sent_count: 0,
           failed_count: 0,
           created_at: new Date().toISOString(),
@@ -131,40 +162,55 @@ export default function SendClient({
 
               {preflight.blockers.length === 0 ? (
                 <>
-                  <div className="mb-4">
-                    <label className="field-label">Pacing</label>
-                    <div className="space-y-2">
-                      {recommendations.map((rec) => (
-                        <label
-                          key={rec.profile}
-                          className="flex items-start gap-2 text-sm border border-navy-100 rounded px-3 py-2 cursor-pointer has-[:checked]:border-navy-400 has-[:checked]:bg-navy-50"
-                        >
-                          <input type="radio" name="pace" checked={pace === rec.profile} onChange={() => setPace(rec.profile)} className="accent-navy-800 mt-0.5" />
-                          <span>
-                            <span className="font-medium text-navy-900">{rec.label}</span>
-                            {rec.isRecommended ? <span className="badge-success ml-2">Recommended</span> : null}
-                            <span className="block text-navy-500 text-xs">{rec.description}</span>
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {createError ? <p className="text-sm text-danger bg-danger-bg rounded px-3 py-2 mb-3">{createError}</p> : null}
-
-                  <ConfirmAction
-                    triggerLabel={`Send ${JOB_LABELS[selectedType]}`}
-                    triggerClassName="btn-primary"
-                    consequence={`This will send "${JOB_LABELS[selectedType]}" for ${eventTitle} to ${preflight.recipientCount} ${
-                      preflight.recipientCount === 1 ? 'person' : 'people'
-                    }${
-                      estimatedFinish
-                        ? `, spaced out through around ${formatEta(estimatedFinish)}`
-                        : ''
-                    }. You can close this window any time - sending continues on the server, and you can pause or cancel the rest from here later.`}
-                    confirmLabel="Send"
-                    onConfirm={handleSend}
+                  <RecipientPicker
+                    recipients={recipients}
+                    excluded={excluded}
+                    onToggleExclude={toggleExclude}
+                    onToggleAll={toggleAllExcluded}
                   />
+
+                  {includedCount === 0 ? (
+                    <p className="text-sm text-navy-500 bg-navy-50 rounded px-3 py-2 mb-4">
+                      Everyone has been unchecked - select at least one person above to send.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <label className="field-label">Pacing</label>
+                        <div className="space-y-2">
+                          {recommendations.map((rec) => (
+                            <label
+                              key={rec.profile}
+                              className="flex items-start gap-2 text-sm border border-navy-100 rounded px-3 py-2 cursor-pointer has-[:checked]:border-navy-400 has-[:checked]:bg-navy-50"
+                            >
+                              <input type="radio" name="pace" checked={pace === rec.profile} onChange={() => setPace(rec.profile)} className="accent-navy-800 mt-0.5" />
+                              <span>
+                                <span className="font-medium text-navy-900">{rec.label}</span>
+                                {rec.isRecommended ? <span className="badge-success ml-2">Recommended</span> : null}
+                                <span className="block text-navy-500 text-xs">{rec.description}</span>
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {createError ? <p className="text-sm text-danger bg-danger-bg rounded px-3 py-2 mb-3">{createError}</p> : null}
+
+                      <ConfirmAction
+                        triggerLabel={`Send ${JOB_LABELS[selectedType]}`}
+                        triggerClassName="btn-primary"
+                        consequence={`This will send "${JOB_LABELS[selectedType]}" for ${eventTitle} to ${includedCount} ${
+                          includedCount === 1 ? 'person' : 'people'
+                        }${
+                          estimatedFinish
+                            ? `, spaced out through around ${formatEta(estimatedFinish)}`
+                            : ''
+                        }. You can close this window any time - sending continues on the server, and you can pause or cancel the rest from here later.`}
+                        confirmLabel="Send"
+                        onConfirm={handleSend}
+                      />
+                    </>
+                  )}
                 </>
               ) : null}
             </>

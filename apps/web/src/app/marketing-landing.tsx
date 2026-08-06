@@ -116,10 +116,10 @@ export default function MarketingLanding({ isSignedIn = false }: { isSignedIn?: 
       <section className="bg-navy-50 border-y border-navy-100">
         <div className="max-w-md mx-auto px-6 py-16 text-center">
           <h2 className="text-navy-900">Simple pricing</h2>
-          <p className="text-navy-500 text-sm mt-2 mb-6">Priced to cover what it costs to run - not to profit off it.</p>
+          <p className="text-navy-500 text-sm mt-2 mb-6">One flat monthly price - no per-seat or per-contact fees.</p>
           <div className="card p-8">
             <p className="text-4xl font-serif text-navy-950">
-              $15<span className="text-lg text-navy-400 font-sans">/month</span>
+              $99<span className="text-lg text-navy-400 font-sans">/month</span>
             </p>
             <p className="text-navy-500 text-sm mt-2 mb-6">Covers hosting, the writing assistant, and upkeep.</p>
             <ul className="text-sm text-navy-700 text-left space-y-2 mb-6">

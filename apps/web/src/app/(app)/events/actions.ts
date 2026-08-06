@@ -219,7 +219,11 @@ export interface PersonSearchResult {
   contact_preference: string;
 }
 
-export async function searchPeopleForInviteAction(eventId: string, query: string): Promise<PersonSearchResult[]> {
+/** Everyone in the tenant's contact database not already invited to this
+ * event - unsliced, so a Host with a 500-person database can select all of
+ * it at once and then uncheck the handful she doesn't want, rather than
+ * being limited to whatever a search happens to turn up. */
+export async function getAllPeopleForInviteAction(eventId: string): Promise<PersonSearchResult[]> {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
 
@@ -231,13 +235,12 @@ export async function searchPeopleForInviteAction(eventId: string, query: string
   // Contacts list search, so "search by anything" is right in one place.
   const { data } = await supabase.rpc('search_people', {
     p_tenant_id: appUser.tenant_id,
-    p_query: query.trim() || null,
+    p_query: null,
     p_status: 'active',
   });
 
   return (data ?? [])
     .filter((p) => !existingIds.has(p.id))
-    .slice(0, 25)
     .map((p) => ({
       id: p.id,
       first_name: p.first_name,

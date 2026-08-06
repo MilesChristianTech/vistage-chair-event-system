@@ -18,6 +18,30 @@ export async function getFormPreviewAction(eventId: string): Promise<PublicFormD
   return getFormPreviewData(eventId);
 }
 
+export interface RecipientPreview {
+  invitationId: string;
+  name: string;
+  email: string | null;
+}
+
+/** The actual people this particular send will reach, one level narrower
+ * than the event's whole invitee list (Part 7.7's per-type targeting - a
+ * reminder only goes to non-responders, a thank-you only to attendees,
+ * etc.) - so the Host can see exactly who's about to get this message and
+ * uncheck anyone who doesn't need it, without changing the event's invitees. */
+export async function getRecipientPreviewAction(eventId: string, jobType: SendJobType): Promise<RecipientPreview[]> {
+  const supabase = await createClient();
+  const candidates = await getRecipientCandidates(supabase, eventId, jobType);
+  return candidates.map((c) => {
+    const person = Array.isArray(c.people) ? c.people[0] : c.people;
+    return {
+      invitationId: c.id,
+      name: person ? `${person.first_name} ${person.last_name}` : 'Unknown',
+      email: person?.email ?? null,
+    };
+  });
+}
+
 export interface ActionResult {
   ok: boolean;
   error?: string;
@@ -103,10 +127,11 @@ export async function createSendJobAction(params: {
   eventId: string;
   jobType: SendJobType;
   paceProfile: PaceProfile;
+  excludeInvitationIds?: string[];
 }): Promise<CreateSendJobResult> {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
-  const { eventId, jobType, paceProfile } = params;
+  const { eventId, jobType, paceProfile, excludeInvitationIds } = params;
 
   // Re-checked here (not just in the preflight status the UI reads before
   // showing the Send button) since preflight could be stale by the time this
@@ -127,6 +152,7 @@ export async function createSendJobAction(params: {
     eventId,
     jobType,
     paceProfile,
+    excludeInvitationIds,
   });
 
   if (result.ok) revalidatePath(`/events/${eventId}`, 'layout');

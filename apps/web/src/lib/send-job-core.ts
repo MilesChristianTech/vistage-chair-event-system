@@ -34,7 +34,7 @@ export async function getRecipientCandidates(
 ) {
   let query = supabase
     .from('invitations')
-    .select('id, invite_status, rsvp_status, attendance_status, people!inner(email, contact_preference)')
+    .select('id, invite_status, rsvp_status, attendance_status, people!inner(first_name, last_name, email, contact_preference)')
     .eq('event_id', eventId)
     .neq('people.contact_preference', 'do_not_contact')
     .not('people.email', 'is', null);
@@ -85,11 +85,18 @@ export async function getActiveJobForType(supabase: SupabaseClient<Database>, ev
  * checks appropriate to their context. */
 export async function createSendJobCore(
   supabase: SupabaseClient<Database>,
-  params: { tenantId: string; createdBy: string | null; eventId: string; jobType: SendJobType; paceProfile: PaceProfile }
+  params: {
+    tenantId: string;
+    createdBy: string | null;
+    eventId: string;
+    jobType: SendJobType;
+    paceProfile: PaceProfile;
+    excludeInvitationIds?: string[];
+  }
 ): Promise<CreateSendJobResult> {
-  const { tenantId, createdBy, eventId, jobType, paceProfile } = params;
+  const { tenantId, createdBy, eventId, jobType, paceProfile, excludeInvitationIds } = params;
 
-  const [{ data: tenant }, { data: event }, { data: message }, { data: form }, tenantSettings, candidates] = await Promise.all([
+  const [{ data: tenant }, { data: event }, { data: message }, { data: form }, tenantSettings, allCandidates] = await Promise.all([
     supabase.from('tenants').select('is_demo').eq('id', tenantId).single(),
     supabase.from('events').select('public_title').eq('id', eventId).single(),
     supabase.from('messages').select('id, subject, body, attachment_urls, is_approved').eq('event_id', eventId).eq('message_type', jobType).single(),
@@ -97,6 +104,13 @@ export async function createSendJobCore(
     getTenantSettings(tenantId),
     getRecipientCandidates(supabase, eventId, jobType),
   ]);
+
+  // Excludes recipients the Host deliberately unchecked on the Send screen's
+  // "who's actually getting this" preview - the auto-computed candidate list
+  // (Part 7.7) is still the starting point, this only narrows it further for
+  // this one send.
+  const excludeSet = new Set(excludeInvitationIds ?? []);
+  const candidates = excludeSet.size > 0 ? allCandidates.filter((c) => !excludeSet.has(c.id)) : allCandidates;
 
   if (!message?.is_approved) return { ok: false, error: 'Approve this message before sending.' };
   if (candidates.length === 0) return { ok: false, error: 'There is no one to send to right now.' };
