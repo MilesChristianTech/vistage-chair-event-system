@@ -335,6 +335,34 @@ export async function deletePersonAction(personId: string): Promise<ActionResult
   return { ok: true };
 }
 
+export interface DeleteAllResult extends ActionResult {
+  deletedCount?: number;
+  skippedCount?: number;
+}
+
+// Same protection as deletePersonAction, applied in bulk: invitations.
+// person_id cascades at the DB level (0001_core_schema.sql), so this
+// app-level check is the only thing standing between "delete all" and
+// silently wiping out event history - anyone tied to an invitation is kept.
+export async function deleteAllPeopleAction(): Promise<DeleteAllResult> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const { data: invited } = await supabase.from('invitations').select('person_id').eq('tenant_id', appUser.tenant_id);
+  const protectedIds = Array.from(new Set((invited ?? []).map((r) => r.person_id)));
+
+  let query = supabase.from('people').delete({ count: 'exact' }).eq('tenant_id', appUser.tenant_id);
+  if (protectedIds.length > 0) {
+    query = query.not('id', 'in', `(${protectedIds.join(',')})`);
+  }
+  const { error, count } = await query;
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/contacts');
+  return { ok: true, deletedCount: count ?? 0, skippedCount: protectedIds.length };
+}
+
 export async function addPersonNoteAction(personId: string, body: string): Promise<ActionResult> {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();

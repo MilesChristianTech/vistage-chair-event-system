@@ -4,6 +4,7 @@ import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
 import ContactRow from './contact-row';
+import DeleteAllButton from './delete-all-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export default async function ContactsPage({
   const typeFilter = searchParams?.type || '';
   const statusFilter = searchParams?.status || 'active';
 
-  const [{ data: relationshipTypes }, { data: customFields }, { data: people }] = await Promise.all([
+  const [{ data: relationshipTypes }, { data: customFields }, { data: people }, { count: totalCount }] = await Promise.all([
     supabase.from('relationship_types').select('id, label').eq('tenant_id', appUser.tenant_id).order('sort_order'),
     supabase.from('custom_field_definitions').select('id, field_key, label').eq('tenant_id', appUser.tenant_id).order('sort_order'),
     // search_people (Part: "search by anything") matches name, company,
@@ -33,6 +34,9 @@ export default async function ContactsPage({
         p_relationship_type_id: typeFilter || null,
       })
       .limit(200),
+    // Unfiltered total, since "Delete all" always acts on the whole
+    // database regardless of whatever search/filter is active right now.
+    supabase.from('people').select('id', { count: 'exact', head: true }).eq('tenant_id', appUser.tenant_id),
   ]);
 
   const exportParams = new URLSearchParams();
@@ -58,6 +62,7 @@ export default async function ContactsPage({
             <Link href="/contacts/new" className="btn-primary">
               + Add person
             </Link>
+            <DeleteAllButton totalCount={totalCount ?? 0} />
           </>
         }
       />
