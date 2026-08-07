@@ -328,8 +328,8 @@ export async function suggestColumnMapping(params: {
 
   return callForJSON<{ mappings: { columnIndex: number; target: string }[] }>({
     system:
-      'You are helping map a messy, real-world spreadsheet of business contacts onto a fixed set of target fields for a CRM import. Be conservative: only map a column to a target field you are genuinely confident about from its header and sample values. When nothing fits well, use "ignore" rather than forcing a bad match onto an important field.',
-    user: `Target fields available (use these exact keys, or "ignore"):\n${fieldsBlock}\n\nSpreadsheet columns:\n${columnBlock}\n\nFor every column index, return the single best target field key (each target field should be used at most once - if two columns could both plausibly be the same field, only map the better one and "ignore" the other). Return via the tool.`,
+      'You are the final checker for a CRM contact import - a real Host is about to trust your decision for every column in their spreadsheet, sight unseen, so be careful and thorough rather than fast. For each column, read its header AND its sample values together (a header can be misleading on its own - e.g. a column literally titled "Phone" full of email addresses is a mislabeled column, and you should follow the data). Map a column to a target field only when you are genuinely confident; when nothing fits well, use "ignore" - never force a bad match onto an important field like email or a name.',
+    user: `Target fields available (use these exact keys, or "ignore"):\n${fieldsBlock}\n\nSpreadsheet columns:\n${columnBlock}\n\nYou must return a decision for every single column index listed above, with no gaps. Each target field must be used by at most one column - if two columns could both plausibly be the same field, map only the better match to it and set the other to "ignore" (never map two different columns to the same target). Return via the tool.`,
     toolName: 'return_column_mapping',
     toolDescription: 'Return the column-to-field mapping.',
     schema: {
@@ -349,7 +349,7 @@ export async function suggestColumnMapping(params: {
       },
       required: ['mappings'],
     },
-    maxTokens: 1536,
+    maxTokens: 3072,
   });
 }
 

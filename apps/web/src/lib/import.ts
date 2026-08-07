@@ -86,6 +86,75 @@ export function guessColumnMapping(headers: string[]): Record<number, PersonFiel
   return mapping;
 }
 
+/** Guarantees every non-"ignore" target is claimed by at most one column -
+ * whichever comes first (lowest column index) wins, later duplicates become
+ * "ignore". Without this, applyMapping's get() and its custom-fields loop
+ * both silently use only one of the duplicate columns' data (first-match for
+ * fixed fields, last-write for custom fields) while the mapping table still
+ * shows every duplicate as confidently mapped - so a Host reviewing it sees
+ * nothing wrong, but data from every column except the winner never actually
+ * lands anywhere. Run this on any mapping before it's trusted, not just the
+ * AI-assisted one, since a manual selection can create the same collision. */
+export function dedupeMapping(mapping: Record<number, ColumnTarget>): Record<number, ColumnTarget> {
+  const result: Record<number, ColumnTarget> = {};
+  const claimed = new Set<ColumnTarget>();
+  const indices = Object.keys(mapping)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  for (const idx of indices) {
+    const target = mapping[idx]!;
+    if (target !== 'ignore' && claimed.has(target)) {
+      result[idx] = 'ignore';
+      continue;
+    }
+    result[idx] = target;
+    if (target !== 'ignore') claimed.add(target);
+  }
+
+  return result;
+}
+
+/** Combines the instant regex guess with the AI checker's verdict, letting
+ * the AI's decisions win any target collision regardless of column order
+ * (it saw the actual sample values, the regex guess only saw headers) - the
+ * regex guess only fills in columns the AI didn't address. Always dedupe the
+ * result (see dedupeMapping) since resolving one collision can create
+ * another between two columns the AI never even considered. */
+export function mergeMappings(base: Record<number, ColumnTarget>, overrides: Record<number, ColumnTarget>): Record<number, ColumnTarget> {
+  const claimed = new Set<ColumnTarget>();
+  const result: Record<number, ColumnTarget> = {};
+
+  const overrideIndices = Object.keys(overrides)
+    .map(Number)
+    .sort((a, b) => a - b);
+  for (const idx of overrideIndices) {
+    const target = overrides[idx]!;
+    if (target !== 'ignore' && claimed.has(target)) {
+      result[idx] = 'ignore';
+      continue;
+    }
+    result[idx] = target;
+    if (target !== 'ignore') claimed.add(target);
+  }
+
+  const remainingIndices = Object.keys(base)
+    .map(Number)
+    .filter((idx) => !(idx in overrides))
+    .sort((a, b) => a - b);
+  for (const idx of remainingIndices) {
+    const target = base[idx]!;
+    if (target !== 'ignore' && claimed.has(target)) {
+      result[idx] = 'ignore';
+      continue;
+    }
+    result[idx] = target;
+    if (target !== 'ignore') claimed.add(target);
+  }
+
+  return result;
+}
+
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }

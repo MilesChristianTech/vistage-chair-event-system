@@ -6,6 +6,8 @@ import * as XLSX from 'xlsx';
 import {
   applyMapping,
   guessColumnMapping,
+  mergeMappings,
+  dedupeMapping,
   PERSON_FIELD_LABELS,
   type MappedPersonRow,
   type ParsedSheet,
@@ -20,7 +22,8 @@ import {
   type CustomFieldDefinition,
 } from '../actions';
 
-type Step = 'drop' | 'mapping' | 'preview' | 'dedupe' | 'done';
+type Step = 'drop' | 'checking' | 'mapping' | 'preview' | 'dedupe' | 'done';
+type SmartStatus = { available: true } | { available: false; reason: 'not_configured' | 'error' };
 
 export default function ImportWizard({ customFieldDefinitions }: { customFieldDefinitions: CustomFieldDefinition[] }) {
   const router = useRouter();
@@ -34,8 +37,7 @@ export default function ImportWizard({ customFieldDefinitions }: { customFieldDe
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
-  const [isSmartMapping, setIsSmartMapping] = useState(false);
-  const [smartMapped, setSmartMapped] = useState(false);
+  const [smartStatus, setSmartStatus] = useState<SmartStatus | null>(null);
 
   const mappedRows: MappedPersonRow[] = useMemo(() => {
     if (!sheet) return [];
@@ -62,22 +64,21 @@ export default function ImportWizard({ customFieldDefinitions }: { customFieldDe
 
     const parsed: ParsedSheet = { headers, rows: cleanedRows };
     setSheet(parsed);
-    setMapping(guessColumnMapping(headers));
-    setSmartMapped(false);
-    setStep('mapping');
+    setStep('checking');
 
-    // The regex guess above is instant and always applied first, so the
-    // Host never waits on the network to see a mapping. This call only
-    // upgrades individual columns it's confident about, on top of that -
-    // see suggestColumnMappingAction for why it's always safe to no-op.
-    setIsSmartMapping(true);
-    suggestColumnMappingAction(headers, cleanedRows.slice(0, 5))
-      .then((aiMapping) => {
-        if (Object.keys(aiMapping).length === 0) return;
-        setMapping((current) => ({ ...current, ...aiMapping }));
-        setSmartMapped(true);
-      })
-      .finally(() => setIsSmartMapping(false));
+    // The regex guess is the instant fallback; the AI checker (Part
+    // request: "an agent that... sorts them perfectly into the correct
+    // column before it maps the columns and preview") reviews the actual
+    // header row and sample values against the Host's real fields and gets
+    // the final say on every collision - see mergeMappings. This step
+    // blocks the mapping screen on purpose, so the Host reviews what the
+    // checker actually decided rather than an unreviewed guess.
+    const regexMapping = guessColumnMapping(headers);
+    const result = await suggestColumnMappingAction(headers, cleanedRows.slice(0, 8));
+    const finalMapping = result.available ? mergeMappings(regexMapping, result.mapping) : dedupeMapping(regexMapping);
+    setMapping(finalMapping);
+    setSmartStatus(result.available ? { available: true } : { available: false, reason: result.reason ?? 'error' });
+    setStep('mapping');
   }, []);
 
   async function goToDedupeCheck() {
@@ -115,13 +116,14 @@ export default function ImportWizard({ customFieldDefinitions }: { customFieldDe
 
       {step === 'drop' ? <DropStep onFile={handleFile} error={error} /> : null}
 
+      {step === 'checking' ? <CheckingStep /> : null}
+
       {step === 'mapping' && sheet ? (
         <MappingStep
           sheet={sheet}
           mapping={mapping}
           fields={fields}
-          isSmartMapping={isSmartMapping}
-          smartMapped={smartMapped}
+          smartStatus={smartStatus}
           onChangeMapping={(idx, target) => setMapping((m) => ({ ...m, [idx]: target }))}
           onAddField={(field) => setFields((current) => (current.some((f) => f.field_key === field.field_key) ? current : [...current, field]))}
           onBack={() => setStep('drop')}
@@ -163,7 +165,9 @@ function StepIndicator({ step }: { step: Step }) {
     { key: 'dedupe', label: '4. Duplicates' },
     { key: 'done', label: '5. Done' },
   ];
-  const currentIndex = steps.findIndex((s) => s.key === step);
+  // "checking" is a brief transient sub-state on the way to "mapping" - it
+  // doesn't get its own slot in the indicator, just highlights that one.
+  const currentIndex = steps.findIndex((s) => s.key === (step === 'checking' ? 'mapping' : step));
 
   return (
     <div className="flex items-center gap-2 mb-6 text-xs">
@@ -223,12 +227,25 @@ function DropStep({ onFile, error }: { onFile: (file: File) => void; error: stri
 
 const ADD_NEW_FIELD = '__add_new__';
 
+function CheckingStep() {
+  return (
+    <div className="card p-12 text-center">
+      <div className="inline-flex h-8 w-8 items-center justify-center mb-4">
+        <span className="h-5 w-5 rounded-full border-2 border-navy-200 border-t-navy-700 animate-spin" />
+      </div>
+      <p className="text-navy-700 font-medium mb-1">Checking your columns…</p>
+      <p className="text-navy-500 text-sm">
+        Matching every column against your contact fields before showing you the mapping - just a moment.
+      </p>
+    </div>
+  );
+}
+
 function MappingStep({
   sheet,
   mapping,
   fields,
-  isSmartMapping,
-  smartMapped,
+  smartStatus,
   onChangeMapping,
   onAddField,
   onBack,
@@ -237,24 +254,40 @@ function MappingStep({
   sheet: ParsedSheet;
   mapping: Record<number, ColumnTarget>;
   fields: CustomFieldDefinition[];
-  isSmartMapping: boolean;
-  smartMapped: boolean;
+  smartStatus: { available: true } | { available: false; reason: 'not_configured' | 'error' } | null;
   onChangeMapping: (index: number, target: ColumnTarget) => void;
   onAddField: (field: CustomFieldDefinition) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
+  const targetCounts = new Map<ColumnTarget, number>();
+  for (const target of Object.values(mapping)) {
+    if (target === 'ignore') continue;
+    targetCounts.set(target, (targetCounts.get(target) ?? 0) + 1);
+  }
+  const hasDuplicates = Array.from(targetCounts.values()).some((c) => c > 1);
+
   return (
     <div className="card p-5">
       <h3>Review the column mapping</h3>
       <p className="text-navy-500 text-sm mb-4">
-        We’ve made our best guess at what each column is. Change anything that’s not right - any column can also
+        Checked column by column against your contact fields. Change anything that’s not right - any column can also
         become its own custom field if it doesn’t fit a standard one.
       </p>
-      {isSmartMapping ? (
-        <p className="text-xs text-navy-400 mb-3">Double-checking your columns against your contact fields…</p>
-      ) : smartMapped ? (
-        <p className="text-xs text-success mb-3">Refined by the writing assistant - still worth a quick check below.</p>
+      {smartStatus?.available ? (
+        <p className="text-xs text-success mb-3">Reviewed against your actual data, not just column headers - still worth a quick check below.</p>
+      ) : smartStatus && !smartStatus.available ? (
+        <p className="text-xs text-warn mb-3">
+          {smartStatus.reason === 'not_configured'
+            ? 'Smart checking isn’t connected right now, so this is a plain pattern-based guess - please look over every row carefully.'
+            : 'Smart checking hit an error, so this is a plain pattern-based guess - please look over every row carefully.'}
+        </p>
+      ) : null}
+      {hasDuplicates ? (
+        <p className="text-xs text-danger mb-3">
+          Two or more columns are mapped to the same field below - only one will actually be used per person. Set
+          the extra one(s) to “Ignore this column” or a different field.
+        </p>
       ) : null}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

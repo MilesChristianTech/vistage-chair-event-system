@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
 import type { MappedPersonRow, ColumnTarget } from '@/lib/import';
-import { PERSON_FIELD_LABELS } from '@/lib/import';
+import { PERSON_FIELD_LABELS, dedupeMapping } from '@/lib/import';
 import { suggestColumnMapping } from '@/lib/coach';
 import { AnthropicNotConfiguredError } from '@/lib/anthropic';
 import type { Database, Json } from '@/lib/database.types';
@@ -165,12 +165,19 @@ export async function updatePersonCustomFieldAction(personId: string, fieldKey: 
   return { ok: true };
 }
 
-/** The smart-import mapping step (Part request: "drop in any file and it
- * smart-formats it"). Always safe to call - if the Anthropic key isn't
- * configured, or the model call fails for any reason, this returns an empty
- * mapping rather than throwing, so the wizard's regex-based guess (already
- * applied client-side before this ever resolves) is simply left as-is. */
-export async function suggestColumnMappingAction(headers: string[], sampleRows: string[][]): Promise<Record<number, ColumnTarget>> {
+export interface SmartMappingResult {
+  mapping: Record<number, ColumnTarget>;
+  available: boolean;
+  reason?: 'not_configured' | 'error';
+}
+
+/** The smart-import checking step (Part request: an AI checker that reviews
+ * every column and sorts it into the right field before the Host ever sees
+ * the mapping screen). Never throws - if the Anthropic key isn't
+ * configured, or the model call fails for any reason, `available: false` is
+ * returned with an honest reason so the wizard can say so plainly, rather
+ * than silently pretending nothing happened. */
+export async function suggestColumnMappingAction(headers: string[], sampleRows: string[][]): Promise<SmartMappingResult> {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
 
@@ -196,11 +203,15 @@ export async function suggestColumnMappingAction(headers: string[], sampleRows: 
         mapping[m.columnIndex] = m.target as ColumnTarget;
       }
     }
-    return mapping;
+    // The prompt already asks the model not to double-assign a field, but
+    // this is the actual guarantee - see dedupeMapping's doc comment for why
+    // a duplicate is worse than it looks (silent data loss, not a visible
+    // error).
+    return { mapping: dedupeMapping(mapping), available: true };
   } catch (err) {
-    if (err instanceof AnthropicNotConfiguredError) return {};
+    if (err instanceof AnthropicNotConfiguredError) return { mapping: {}, available: false, reason: 'not_configured' };
     console.error('suggestColumnMappingAction failed:', err);
-    return {};
+    return { mapping: {}, available: false, reason: 'error' };
   }
 }
 
