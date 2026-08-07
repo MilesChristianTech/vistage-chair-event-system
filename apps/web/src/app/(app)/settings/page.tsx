@@ -1,5 +1,7 @@
 import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser, getTenantSettings, getMailboxConnection } from '@/lib/tenant';
+import { createClient } from '@/lib/supabase/server';
+import FieldsManager from '@/components/fields-manager';
 import MailboxCard from './mailbox-card';
 import HostProfileForm from './host-profile-form';
 import BrandingForm from './branding-form';
@@ -12,7 +14,12 @@ export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   const { appUser } = await requireCurrentUser();
-  const [settings, mailbox] = await Promise.all([getTenantSettings(appUser.tenant_id), getMailboxConnection(appUser.tenant_id)]);
+  const supabase = await createClient();
+  const [settings, mailbox, { data: customFields }] = await Promise.all([
+    getTenantSettings(appUser.tenant_id),
+    getMailboxConnection(appUser.tenant_id),
+    supabase.from('custom_field_definitions').select('id, field_key, label').eq('tenant_id', appUser.tenant_id).order('sort_order'),
+  ]);
 
   return (
     <>
@@ -37,6 +44,15 @@ export default async function SettingsPage() {
           <section className="card p-5">
             <h3>Coach voice samples</h3>
             <VoiceSamplesForm initial={settings?.voice_samples ?? []} />
+          </section>
+
+          <section className="card p-5">
+            <h3>Contact fields</h3>
+            <p className="text-navy-500 text-sm mb-4">
+              What matters to you about a contact, beyond the basics - shown as columns on your Contacts list and
+              offered automatically when you import a spreadsheet.
+            </p>
+            <FieldsManager initialFields={customFields ?? []} />
           </section>
 
           <section className="card p-5">

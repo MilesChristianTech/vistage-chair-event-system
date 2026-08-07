@@ -4,8 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireCurrentUser } from '@/lib/tenant';
-import type { MappedPersonRow } from '@/lib/import';
-import type { Json } from '@/lib/database.types';
+import type { MappedPersonRow, ColumnTarget } from '@/lib/import';
+import { PERSON_FIELD_LABELS } from '@/lib/import';
+import { suggestColumnMapping } from '@/lib/coach';
+import { AnthropicNotConfiguredError } from '@/lib/anthropic';
+import type { Database, Json } from '@/lib/database.types';
 
 export interface ActionResult {
   ok: boolean;
@@ -71,6 +74,134 @@ export async function createCustomFieldDefinitionAction(label: string): Promise<
   if (error || !created) return { ok: false, error: error?.message ?? 'Could not create that field.' };
   revalidatePath('/contacts');
   return { ok: true, field: created };
+}
+
+export async function renameCustomFieldDefinitionAction(id: string, label: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const trimmedLabel = label.trim();
+  if (!trimmedLabel) return { ok: false, error: 'Give the field a name.' };
+
+  // field_key deliberately never changes on rename - it's what every
+  // existing person's custom_fields jsonb is keyed by, so changing it would
+  // silently orphan every value already stored under the old key.
+  const { error } = await supabase.from('custom_field_definitions').update({ label: trimmedLabel }).eq('id', id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/contacts');
+  revalidatePath('/settings');
+  return { ok: true };
+}
+
+export async function deleteCustomFieldDefinitionAction(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from('custom_field_definitions').delete().eq('id', id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/contacts');
+  revalidatePath('/settings');
+  return { ok: true };
+}
+
+export async function markContactFieldsOnboardedAction(): Promise<ActionResult> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('tenant_settings')
+    .update({ contact_fields_onboarded: true })
+    .eq('tenant_id', appUser.tenant_id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// Part request: click-to-edit-in-place on the contacts list, for the fixed
+// fields (custom field values go through updatePersonCustomFieldAction
+// below, since those merge into a jsonb column instead of a plain update).
+export async function updatePersonFieldAction(
+  personId: string,
+  field: 'first_name' | 'last_name' | 'company' | 'title' | 'email',
+  value: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const trimmed = value.trim();
+
+  if ((field === 'first_name' || field === 'last_name') && !trimmed) {
+    return { ok: false, error: 'This field can’t be empty.' };
+  }
+
+  const patch: Partial<Record<typeof field, string | null>> = { [field]: trimmed || null };
+  const { error } = await supabase
+    .from('people')
+    .update(patch as Database['public']['Tables']['people']['Update'])
+    .eq('id', personId);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/contacts');
+  revalidatePath(`/contacts/${personId}`);
+  return { ok: true };
+}
+
+export async function updatePersonCustomFieldAction(personId: string, fieldKey: string, value: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { data: person, error: fetchError } = await supabase
+    .from('people')
+    .select('custom_fields')
+    .eq('id', personId)
+    .single();
+  if (fetchError || !person) return { ok: false, error: fetchError?.message ?? 'Could not find that contact.' };
+
+  const trimmed = value.trim();
+  const existing = (person.custom_fields as Record<string, string>) ?? {};
+  const next = { ...existing };
+  if (trimmed) next[fieldKey] = trimmed;
+  else delete next[fieldKey];
+
+  const { error } = await supabase
+    .from('people')
+    .update({ custom_fields: next as unknown as Json })
+    .eq('id', personId);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/contacts');
+  revalidatePath(`/contacts/${personId}`);
+  return { ok: true };
+}
+
+/** The smart-import mapping step (Part request: "drop in any file and it
+ * smart-formats it"). Always safe to call - if the Anthropic key isn't
+ * configured, or the model call fails for any reason, this returns an empty
+ * mapping rather than throwing, so the wizard's regex-based guess (already
+ * applied client-side before this ever resolves) is simply left as-is. */
+export async function suggestColumnMappingAction(headers: string[], sampleRows: string[][]): Promise<Record<number, ColumnTarget>> {
+  const { appUser } = await requireCurrentUser();
+  const supabase = await createClient();
+
+  const { data: customFields } = await supabase
+    .from('custom_field_definitions')
+    .select('field_key, label')
+    .eq('tenant_id', appUser.tenant_id)
+    .order('sort_order');
+
+  const targetFields = [
+    ...Object.entries(PERSON_FIELD_LABELS)
+      .filter(([key]) => key !== 'ignore')
+      .map(([key, label]) => ({ key, label })),
+    ...(customFields ?? []).map((f) => ({ key: `custom:${f.field_key}`, label: f.label })),
+  ];
+
+  try {
+    const result = await suggestColumnMapping({ headers, sampleRows, targetFields });
+    const validKeys = new Set(targetFields.map((f) => f.key));
+    const mapping: Record<number, ColumnTarget> = {};
+    for (const m of result.mappings) {
+      if (validKeys.has(m.target)) {
+        mapping[m.columnIndex] = m.target as ColumnTarget;
+      }
+    }
+    return mapping;
+  } catch (err) {
+    if (err instanceof AnthropicNotConfiguredError) return {};
+    console.error('suggestColumnMappingAction failed:', err);
+    return {};
+  }
 }
 
 // Part 4.4 / 6.1: editing a person is always free, immediate, and has no

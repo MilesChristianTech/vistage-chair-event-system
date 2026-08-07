@@ -299,6 +299,60 @@ Generate ${count} variants of this exact message for deliverability at volume (P
   });
 }
 
+/** Smart import (contacts): given a spreadsheet's header row and a few
+ * sample data rows, decide which of the tenant's actual target fields (the
+ * fixed person fields plus whatever custom fields they've defined - never
+ * fields that don't exist) each column belongs to. This is deliberately an
+ * enhancement layer, not the only source of truth - the caller
+ * (import-wizard.tsx) always has the regex-based guessColumnMapping result
+ * as an instant fallback and applies this on top of it, so a missing
+ * Anthropic key or an odd file never blocks an import. */
+export async function suggestColumnMapping(params: {
+  headers: string[];
+  sampleRows: string[][];
+  targetFields: { key: string; label: string; hint?: string }[];
+}) {
+  const { headers, sampleRows, targetFields } = params;
+
+  const columnBlock = headers
+    .map((header, i) => {
+      const samples = sampleRows
+        .map((r) => r[i])
+        .filter((v): v is string => Boolean(v && v.trim()))
+        .slice(0, 3);
+      return `Column ${i}: header = "${header || '(blank header)'}"${samples.length > 0 ? `, sample values = ${samples.map((s) => `"${s}"`).join(', ')}` : ''}`;
+    })
+    .join('\n');
+
+  const fieldsBlock = targetFields.map((f) => `- "${f.key}": ${f.label}${f.hint ? ` (${f.hint})` : ''}`).join('\n');
+
+  return callForJSON<{ mappings: { columnIndex: number; target: string }[] }>({
+    system:
+      'You are helping map a messy, real-world spreadsheet of business contacts onto a fixed set of target fields for a CRM import. Be conservative: only map a column to a target field you are genuinely confident about from its header and sample values. When nothing fits well, use "ignore" rather than forcing a bad match onto an important field.',
+    user: `Target fields available (use these exact keys, or "ignore"):\n${fieldsBlock}\n\nSpreadsheet columns:\n${columnBlock}\n\nFor every column index, return the single best target field key (each target field should be used at most once - if two columns could both plausibly be the same field, only map the better one and "ignore" the other). Return via the tool.`,
+    toolName: 'return_column_mapping',
+    toolDescription: 'Return the column-to-field mapping.',
+    schema: {
+      type: 'object',
+      properties: {
+        mappings: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              columnIndex: { type: 'integer' },
+              target: { type: 'string' },
+            },
+            required: ['columnIndex', 'target'],
+          },
+        },
+      },
+      required: ['mappings'],
+    },
+    maxTokens: 1536,
+  });
+}
+
 export async function generateHandwrittenTouch(params: {
   ctx: EventContext;
   personFirstName: string;

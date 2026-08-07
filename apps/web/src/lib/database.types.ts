@@ -381,6 +381,7 @@ export interface Database {
           host_display_name: string | null;
           host_signature: string | null;
           voice_samples: string[];
+          contact_fields_onboarded: boolean;
           updated_at: string;
         };
         Insert: Partial<Database['public']['Tables']['tenant_settings']['Row']> & {

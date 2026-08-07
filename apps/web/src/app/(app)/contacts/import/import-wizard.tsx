@@ -11,7 +11,14 @@ import {
   type ParsedSheet,
   type ColumnTarget,
 } from '@/lib/import';
-import { checkDuplicateEmailsAction, commitImportAction, createCustomFieldDefinitionAction, type ImportSummary, type CustomFieldDefinition } from '../actions';
+import {
+  checkDuplicateEmailsAction,
+  commitImportAction,
+  createCustomFieldDefinitionAction,
+  suggestColumnMappingAction,
+  type ImportSummary,
+  type CustomFieldDefinition,
+} from '../actions';
 
 type Step = 'drop' | 'mapping' | 'preview' | 'dedupe' | 'done';
 
@@ -27,6 +34,8 @@ export default function ImportWizard({ customFieldDefinitions }: { customFieldDe
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
+  const [isSmartMapping, setIsSmartMapping] = useState(false);
+  const [smartMapped, setSmartMapped] = useState(false);
 
   const mappedRows: MappedPersonRow[] = useMemo(() => {
     if (!sheet) return [];
@@ -54,7 +63,21 @@ export default function ImportWizard({ customFieldDefinitions }: { customFieldDe
     const parsed: ParsedSheet = { headers, rows: cleanedRows };
     setSheet(parsed);
     setMapping(guessColumnMapping(headers));
+    setSmartMapped(false);
     setStep('mapping');
+
+    // The regex guess above is instant and always applied first, so the
+    // Host never waits on the network to see a mapping. This call only
+    // upgrades individual columns it's confident about, on top of that -
+    // see suggestColumnMappingAction for why it's always safe to no-op.
+    setIsSmartMapping(true);
+    suggestColumnMappingAction(headers, cleanedRows.slice(0, 5))
+      .then((aiMapping) => {
+        if (Object.keys(aiMapping).length === 0) return;
+        setMapping((current) => ({ ...current, ...aiMapping }));
+        setSmartMapped(true);
+      })
+      .finally(() => setIsSmartMapping(false));
   }, []);
 
   async function goToDedupeCheck() {
@@ -97,6 +120,8 @@ export default function ImportWizard({ customFieldDefinitions }: { customFieldDe
           sheet={sheet}
           mapping={mapping}
           fields={fields}
+          isSmartMapping={isSmartMapping}
+          smartMapped={smartMapped}
           onChangeMapping={(idx, target) => setMapping((m) => ({ ...m, [idx]: target }))}
           onAddField={(field) => setFields((current) => (current.some((f) => f.field_key === field.field_key) ? current : [...current, field]))}
           onBack={() => setStep('drop')}
@@ -202,6 +227,8 @@ function MappingStep({
   sheet,
   mapping,
   fields,
+  isSmartMapping,
+  smartMapped,
   onChangeMapping,
   onAddField,
   onBack,
@@ -210,6 +237,8 @@ function MappingStep({
   sheet: ParsedSheet;
   mapping: Record<number, ColumnTarget>;
   fields: CustomFieldDefinition[];
+  isSmartMapping: boolean;
+  smartMapped: boolean;
   onChangeMapping: (index: number, target: ColumnTarget) => void;
   onAddField: (field: CustomFieldDefinition) => void;
   onBack: () => void;
@@ -222,6 +251,11 @@ function MappingStep({
         We’ve made our best guess at what each column is. Change anything that’s not right - any column can also
         become its own custom field if it doesn’t fit a standard one.
       </p>
+      {isSmartMapping ? (
+        <p className="text-xs text-navy-400 mb-3">Double-checking your columns against your contact fields…</p>
+      ) : smartMapped ? (
+        <p className="text-xs text-success mb-3">Refined by the writing assistant - still worth a quick check below.</p>
+      ) : null}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-navy-50 text-navy-600 text-xs uppercase tracking-wide">

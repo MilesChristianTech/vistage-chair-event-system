@@ -122,9 +122,20 @@ export function applyMapping(sheet: ParsedSheet, mapping: Record<number, ColumnT
 
     const email = get('email');
 
+    // A single "Name" column (no separately-mapped last name) most often
+    // holds a full name - split it so First/Last land in the right fields
+    // instead of the whole thing sitting in First Name alone.
+    let firstName = get('first_name');
+    let lastName = get('last_name');
+    if (firstName && !lastName && firstName.trim().includes(' ')) {
+      const parts = firstName.trim().split(/\s+/);
+      firstName = parts[0]!;
+      lastName = parts.slice(1).join(' ');
+    }
+
     return {
-      first_name: get('first_name'),
-      last_name: get('last_name'),
+      first_name: firstName,
+      last_name: lastName,
       preferred_name: get('preferred_name') || null,
       email: email || null,
       company: get('company') || null,

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
@@ -11,7 +12,17 @@ import { Toaster } from 'sonner';
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { appUser } = await requireCurrentUser();
   const supabase = await createClient();
-  const { data: tenant } = await supabase.from('tenants').select('name, is_demo').eq('id', appUser.tenant_id).single();
+  const [{ data: tenant }, { data: tenantSettings }] = await Promise.all([
+    supabase.from('tenants').select('name, is_demo').eq('id', appUser.tenant_id).single(),
+    supabase.from('tenant_settings').select('contact_fields_onboarded').eq('tenant_id', appUser.tenant_id).single(),
+  ]);
+
+  // First-run: a brand-new tenant lands here before ever seeing the rest of
+  // the product, to set up their important contact fields (Part request).
+  // The demo tenant is pre-seeded and skips this - see docs/OWNER_SETUP_CHECKLIST.md.
+  if (!tenant?.is_demo && !tenantSettings?.contact_fields_onboarded) {
+    redirect('/onboarding/fields');
+  }
 
   const initials = appUser.display_name
     .split(' ')

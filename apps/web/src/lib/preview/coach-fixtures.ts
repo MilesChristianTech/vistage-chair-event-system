@@ -49,6 +49,11 @@ export function buildPreviewResponse(toolName: string, userPrompt: string): any 
     case 'return_touch':
       return { sentence: 'It was great catching up last time - this felt like exactly the right group for you.' };
 
+    case 'return_column_mapping':
+      // No-op in preview mode - the wizard's client-side regex guesser
+      // already fills the mapping in, this just declines to improve on it.
+      return { mappings: [] };
+
     default:
       return {};
   }

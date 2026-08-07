@@ -3,8 +3,7 @@ import { Download } from 'lucide-react';
 import { AppPageHeader, AppPageBody } from '@/components/page-header';
 import { requireCurrentUser } from '@/lib/tenant';
 import { createClient } from '@/lib/supabase/server';
-import Avatar from '@/components/avatar';
-import QuickNoteButton from './quick-note-button';
+import ContactRow from './contact-row';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,24 +19,21 @@ export default async function ContactsPage({
   const typeFilter = searchParams?.type || '';
   const statusFilter = searchParams?.status || 'active';
 
-  const { data: relationshipTypes } = await supabase
-    .from('relationship_types')
-    .select('id, label')
-    .eq('tenant_id', appUser.tenant_id)
-    .order('sort_order');
-
-  // search_people (Part: "search by anything") matches name, company,
-  // title, email, relationship type label, the summary note, and any
-  // custom field value in one place - shared with the add-invitees search.
-  const { data: people } = await supabase
-    .rpc('search_people', {
-      p_tenant_id: appUser.tenant_id,
-      p_query: q || null,
-      p_status: statusFilter,
-      p_relationship_type_id: typeFilter || null,
-    })
-    .limit(200);
-  const typeLabel = new Map((relationshipTypes ?? []).map((t) => [t.id, t.label]));
+  const [{ data: relationshipTypes }, { data: customFields }, { data: people }] = await Promise.all([
+    supabase.from('relationship_types').select('id, label').eq('tenant_id', appUser.tenant_id).order('sort_order'),
+    supabase.from('custom_field_definitions').select('id, field_key, label').eq('tenant_id', appUser.tenant_id).order('sort_order'),
+    // search_people (Part: "search by anything") matches name, company,
+    // title, email, relationship type label, the summary note, and any
+    // custom field value in one place - shared with the add-invitees search.
+    supabase
+      .rpc('search_people', {
+        p_tenant_id: appUser.tenant_id,
+        p_query: q || null,
+        p_status: statusFilter,
+        p_relationship_type_id: typeFilter || null,
+      })
+      .limit(200),
+  ]);
 
   const exportParams = new URLSearchParams();
   if (q) exportParams.set('q', q);
@@ -107,69 +103,39 @@ export default async function ContactsPage({
           </div>
         ) : (
           <div className="card overflow-hidden">
+            <p className="text-navy-400 text-xs px-4 pt-2.5">Click any value below to edit it directly.</p>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-navy-50 text-navy-600 text-xs uppercase tracking-wide">
-                <tr>
-                  <th className="text-left px-4 py-2.5 font-medium">Name</th>
-                  <th className="text-left px-4 py-2.5 font-medium">Company / Title</th>
-                  <th className="text-left px-4 py-2.5 font-medium">Email</th>
-                  <th className="text-left px-4 py-2.5 font-medium">Type</th>
-                  <th className="text-left px-4 py-2.5 font-medium">Contact pref.</th>
-                  <th className="text-left px-4 py-2.5 font-medium">Quick note</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy-100">
-                {people.map((p, i) => (
-                  <tr
-                    key={p.id}
-                    style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}
-                    className="animate-fade-up hover:bg-navy-50 transition-colors duration-150"
-                  >
-                    <td className="px-4 py-2.5">
-                      <Link href={`/contacts/${p.id}`} className="flex items-center gap-2.5">
-                        <Avatar firstName={p.first_name} lastName={p.last_name} size="sm" />
-                        <span className="font-medium text-navy-900">
-                          {p.first_name} {p.last_name}
-                        </span>
-                      </Link>
-                      {p.preferred_name ? <span className="text-navy-400 text-xs"> ({p.preferred_name})</span> : null}
-                      {!p.is_active ? <span className="badge-neutral ml-2">Inactive</span> : null}
-                    </td>
-                    <td className="px-4 py-2.5 text-navy-600">
-                      {p.company || <span className="text-navy-300">-</span>}
-                      {p.title ? <span className="text-navy-400"> · {p.title}</span> : null}
-                    </td>
-                    <td className="px-4 py-2.5 text-navy-600">
-                      {p.email || <span className="text-danger text-xs">No email on file</span>}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      {p.relationship_type_id ? (
-                        <span className="badge-neutral">{typeLabel.get(p.relationship_type_id) ?? '-'}</span>
-                      ) : (
-                        <span className="text-navy-300">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <ContactPrefBadge pref={p.contact_preference} />
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <QuickNoteButton personId={p.id} />
-                    </td>
+              <table className="w-full text-sm">
+                <thead className="bg-navy-50 text-navy-600 text-xs uppercase tracking-wide">
+                  <tr>
+                    <th className="pl-4 pr-1 py-2.5" />
+                    <th className="text-left px-2 py-2.5 font-medium">First Name</th>
+                    <th className="text-left px-2 py-2.5 font-medium">Last Name</th>
+                    <th className="text-left px-2 py-2.5 font-medium">Company</th>
+                    <th className="text-left px-2 py-2.5 font-medium">Title</th>
+                    <th className="text-left px-2 py-2.5 font-medium">Email</th>
+                    {(customFields ?? []).map((f) => (
+                      <th key={f.id} className="text-left px-2 py-2.5 font-medium">
+                        {f.label}
+                      </th>
+                    ))}
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-navy-100">
+                  {people.map((p) => (
+                    <ContactRow
+                      key={p.id}
+                      person={{ ...p, custom_fields: p.custom_fields as Record<string, string> | null }}
+                      customFields={customFields ?? []}
+                    />
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
       </AppPageBody>
     </>
   );
-}
-
-function ContactPrefBadge({ pref }: { pref: string }) {
-  if (pref === 'do_not_contact') return <span className="badge-danger">Do not contact</span>;
-  if (pref === 'phone_only') return <span className="badge-warn">Phone only</span>;
-  return <span className="badge-success">Email ok</span>;
 }
